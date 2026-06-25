@@ -1,18 +1,19 @@
 /**
  * tests/services/filterTracks.test.js
- * Verifies playlist filtering behavior for title and artist search.
+ * Verifies playlist filtering behavior for title, artist, and favorites filters.
  * Connects to: src/services/filterTracks.js
  * Created: 2026-06-25
  */
 
 import test from "node:test";
 import assert from "node:assert/strict";
+import { FILTER_MODES } from "../../src/config/appConfig.js";
 import { filterTracks } from "../../src/services/filterTracks.js";
 
 const tracks = [
-  { artist: "SoundHelix", title: "Sunrise Drive" },
-  { artist: "SoundHelix", title: "Night Fall" },
-  { artist: "Atlas Bloom", title: "Coastal Run" }
+  { artist: "SoundHelix", id: "0", title: "Sunrise Drive" },
+  { artist: "SoundHelix", id: "1", title: "Night Fall" },
+  { artist: "Atlas Bloom", id: "2", title: "Coastal Run" }
 ];
 
 test("filterTracks returns all tracks for an empty query", () => {
@@ -35,3 +36,9 @@ test("filterTracks ignores case and extra whitespace", () => {
   ]);
 });
 
+test("filterTracks supports favorites mode", () => {
+  assert.deepEqual(
+    filterTracks(tracks, "", new Set(["1"]), FILTER_MODES.FAVORITES).map((track) => track.title),
+    ["Night Fall"]
+  );
+});

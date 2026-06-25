@@ -184,6 +184,11 @@ input {
   background: #efe4d8;
 }
 
+.filter-toggle-active {
+  background: #e2c4a7;
+  border: 1px solid rgba(193, 92, 45, 0.4);
+}
+
 .playlist {
   list-style: none;
   margin: 1rem 0 0;
@@ -227,8 +232,22 @@ input {
   font-size: 0.9rem;
 }
 
+.filter-toggle-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+}
+
 .playlist-item {
   display: grid;
+}
+
+.playlist-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.6rem;
+  align-items: stretch;
 }
 
 .playlist-button {
@@ -255,6 +274,31 @@ input {
 
 .playlist-button-active {
   border-color: var(--accent);
+}
+
+.favorite-button {
+  min-width: 52px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-strong);
+  color: var(--accent-dark);
+  cursor: pointer;
+  font-size: 1.25rem;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.favorite-button:hover,
+.favorite-button:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(193, 92, 45, 0.5);
+  outline: none;
+}
+
+.favorite-button-active {
+  background: #f7dfca;
 }
 
 .playlist-track-title {
@@ -299,6 +343,10 @@ input {
   }
 
   .playlist-search-row {
+    grid-template-columns: 1fr;
+  }
+
+  .playlist-row {
     grid-template-columns: 1fr;
   }
 }

@@ -13,10 +13,12 @@ import { formatTime } from "../utils/formatTime.js";
  * Creates the DOM view adapter for the music player interface.
  * @param {{
  *   onFilterChange: (value: string) => void,
+ *   onFilterModeChange: (value: string) => void,
  *   onNext: () => void,
  *   onPrevious: () => void,
  *   onSetVolume: (level: number) => void,
  *   onSeek: (ratio: number) => void,
+ *   onToggleFavoriteTrack: (trackId: string) => void,
  *   onToggleMute: () => void,
  *   onTogglePlayback: () => void,
  *   onTrackSelect: (trackId: string) => void
@@ -35,6 +37,8 @@ export function createPlayerView(callbacks) {
   const muteButton = document.querySelector("#mute-button");
   const previousButton = document.querySelector("#previous-button");
   const nextButton = document.querySelector("#next-button");
+  const allTracksButton = document.querySelector("#all-tracks-button");
+  const favoriteTracksButton = document.querySelector("#favorite-tracks-button");
   const playlistSearchInput = document.querySelector("#playlist-search");
   const clearSearchButton = document.querySelector("#clear-search-button");
   const playlist = document.querySelector("#playlist");
@@ -44,6 +48,12 @@ export function createPlayerView(callbacks) {
   previousButton.addEventListener("click", callbacks.onPrevious);
   nextButton.addEventListener("click", callbacks.onNext);
   muteButton.addEventListener("click", callbacks.onToggleMute);
+  allTracksButton.addEventListener("click", () => {
+    callbacks.onFilterModeChange("all");
+  });
+  favoriteTracksButton.addEventListener("click", () => {
+    callbacks.onFilterModeChange("favorites");
+  });
   playButton.addEventListener("click", () => {
     void callbacks.onTogglePlayback();
   });
@@ -71,7 +81,7 @@ export function createPlayerView(callbacks) {
     }
 
     if (event.key === "ArrowDown") {
-      const firstTrackButton = playlist.querySelector("button");
+      const firstTrackButton = playlist.querySelector(".playlist-button");
 
       if (firstTrackButton instanceof HTMLButtonElement) {
         event.preventDefault();
@@ -86,6 +96,9 @@ export function createPlayerView(callbacks) {
      * @param {{
      *   currentTimeSeconds: number,
      *   durationSeconds: number,
+     *   favoriteTrackIds: string[],
+     *   favoriteTracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>,
+     *   filterMode: string,
      *   filterQuery: string,
      *   filteredTracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>,
      *   isPlaying: boolean,
@@ -93,7 +106,6 @@ export function createPlayerView(callbacks) {
      *   message: string,
      *   playlistMessage: string,
      *   selectedTrack: { id: string, title: string, artist: string } | null,
-     *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>,
      *   volume: number
      * }} state The current player state.
      * @returns {void}
@@ -102,6 +114,9 @@ export function createPlayerView(callbacks) {
       const {
         currentTimeSeconds,
         durationSeconds,
+        favoriteTrackIds,
+        favoriteTracks,
+        filterMode,
         filterQuery,
         filteredTracks,
         isMuted,
@@ -130,6 +145,11 @@ export function createPlayerView(callbacks) {
       seekSlider.disabled = !hasTrack;
       volumeSlider.value = `${Math.round(volume * VOLUME_RANGE_MAX)}`;
       shortcutHint.textContent = "Shortcuts: Space play/pause, Left/Right previous/next, M mute";
+      allTracksButton.setAttribute("aria-pressed", `${filterMode === "all"}`);
+      favoriteTracksButton.setAttribute("aria-pressed", `${filterMode === "favorites"}`);
+      allTracksButton.classList.toggle("filter-toggle-active", filterMode === "all");
+      favoriteTracksButton.classList.toggle("filter-toggle-active", filterMode === "favorites");
+      favoriteTracksButton.textContent = `Favorites (${favoriteTracks.length})`;
 
       if (playlistSearchInput.value !== filterQuery) {
         playlistSearchInput.value = filterQuery;
@@ -141,6 +161,10 @@ export function createPlayerView(callbacks) {
 
       renderPlaylist({
         container: playlist,
+        favoriteTrackIds,
+        onFavoriteToggle: (trackId) => {
+          callbacks.onToggleFavoriteTrack(trackId);
+        },
         onTrackSelect: (trackId) => {
           void callbacks.onTrackSelect(trackId);
         },

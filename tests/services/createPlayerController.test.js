@@ -90,6 +90,7 @@ const tracks = [
 
 const messages = {
   EMPTY_PLAYLIST: "No tracks available.",
+  FAVORITES_EMPTY: "No favorites available.",
   LOAD_ERROR: "Track failed.",
   LOADING: "Loading tracks.",
   PAUSED: "Paused.",
@@ -170,6 +171,7 @@ test("controller applies and persists saved preferences", () => {
   assert.equal(audioAdapter.getVolume(), 0.35);
   assert.equal(states.at(-1).selectedTrack.id, "two");
   assert.deepEqual(savedPreferences.at(-1), {
+    favoriteTrackIds: [],
     isMuted: true,
     selectedTrackId: "two",
     volume: 0.35
@@ -255,5 +257,59 @@ test("controller exposes empty playlist search messaging", () => {
   controller.setFilterQuery("missing");
 
   assert.equal(states.at(-1).playlistMessage, "No matches.");
+  assert.equal(states.at(-1).filteredTracks.length, 0);
+});
+
+test("controller persists favorite track selections", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const savedPreferences = [];
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onPreferencesChange: (preferences) => savedPreferences.push(preferences),
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.toggleFavoriteTrack("two");
+
+  assert.deepEqual(states.at(-1).favoriteTrackIds, ["two"]);
+  assert.deepEqual(savedPreferences.at(-1).favoriteTrackIds, ["two"]);
+});
+
+test("controller filters to favorites mode", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.toggleFavoriteTrack("two");
+  controller.setFilterMode("favorites");
+
+  assert.equal(states.at(-1).filterMode, "favorites");
+  assert.deepEqual(states.at(-1).filteredTracks.map((track) => track.id), ["two"]);
+});
+
+test("controller exposes favorites empty messaging", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.setFilterMode("favorites");
+
+  assert.equal(states.at(-1).playlistMessage, "No favorites available.");
   assert.equal(states.at(-1).filteredTracks.length, 0);
 });

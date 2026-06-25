@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.0] - 2026-06-25
+### Added
+- Favorite track toggles directly in each playlist row.
+- Favorites-only playlist mode layered on top of text search.
+- Persistence and controller tests for favorite state and favorite filtering behavior.
+
+### Changed
+- Extended local preference storage to include favorite track IDs.
+- Updated README architecture notes for favorite-state flow and stacked filtering.
+
 ## [0.3.0] - 2026-06-25
 ### Added
 - Search input for playlist filtering by title or artist.

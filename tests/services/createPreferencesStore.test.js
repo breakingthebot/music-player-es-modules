@@ -19,6 +19,7 @@ test("preferences store loads defaults when storage is empty", () => {
   const store = createPreferencesStore(storage);
 
   assert.deepEqual(store.load(), {
+    favoriteTrackIds: [],
     isMuted: false,
     selectedTrackId: null,
     volume: 0.72
@@ -31,6 +32,7 @@ test("preferences store clamps and saves values", () => {
   const storage = {
     getItem() {
       return JSON.stringify({
+        favoriteTrackIds: ["two", 4, "one"],
         isMuted: 1,
         selectedTrackId: "two",
         volume: 3
@@ -44,12 +46,14 @@ test("preferences store clamps and saves values", () => {
   const store = createPreferencesStore(storage);
 
   assert.deepEqual(store.load(), {
+    favoriteTrackIds: ["two", "one"],
     isMuted: true,
     selectedTrackId: "two",
     volume: 1
   });
 
   store.save({
+    favoriteTrackIds: ["one", "two"],
     isMuted: false,
     selectedTrackId: "one",
     volume: -4
@@ -57,9 +61,9 @@ test("preferences store clamps and saves values", () => {
 
   assert.equal(savedKey, "music-player-preferences");
   assert.deepEqual(JSON.parse(savedValue), {
+    favoriteTrackIds: ["one", "two"],
     isMuted: false,
     selectedTrackId: "one",
     volume: 0
   });
 });
-

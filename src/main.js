@@ -21,10 +21,12 @@ const initialPreferences = preferencesStore.load();
 
 const view = createPlayerView({
   onFilterChange: (value) => controller.setFilterQuery(value),
+  onFilterModeChange: (value) => controller.setFilterMode(value),
   onNext: () => controller.next(),
   onPrevious: () => controller.previous(),
   onSetVolume: (level) => controller.setVolume(level),
   onSeek: (ratio) => controller.seekTo(ratio),
+  onToggleFavoriteTrack: (trackId) => controller.toggleFavoriteTrack(trackId),
   onToggleMute: () => controller.toggleMute(),
   onTogglePlayback: () => controller.togglePlayback(),
   onTrackSelect: (trackId) => controller.playSelectedTrack(trackId)

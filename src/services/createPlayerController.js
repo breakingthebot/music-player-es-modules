@@ -5,6 +5,10 @@
  * Created: 2026-06-25
  */
 
+import { DEFAULT_VOLUME, FILTER_MODES } from "../config/appConfig.js";
+import { filterTracks } from "./filterTracks.js";
+import { clampNumber } from "../utils/clampNumber.js";
+
 /**
  * Creates the player controller that mediates between audio and UI.
  * @param {{
@@ -19,10 +23,10 @@
  *     setVolume: (value: number) => void,
  *     seekToRatio: (ratio: number) => void
  *   },
- *   initialPreferences?: { isMuted?: boolean, selectedTrackId?: string | null, volume?: number },
+ *   initialPreferences?: { favoriteTrackIds?: string[], isMuted?: boolean, selectedTrackId?: string | null, volume?: number },
  *   messages: Record<string, string>,
  *   onStateChange: (state: object) => void,
- *   onPreferencesChange?: (preferences: { isMuted: boolean, selectedTrackId: string | null, volume: number }) => void,
+ *   onPreferencesChange?: (preferences: { favoriteTrackIds: string[], isMuted: boolean, selectedTrackId: string | null, volume: number }) => void,
  *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>
  * }} dependencies The controller dependencies.
  * @returns {{
@@ -31,17 +35,15 @@
  *   next: () => void,
  *   playSelectedTrack: (trackId: string) => Promise<void>,
  *   previous: () => void,
+ *   setFilterMode: (value: string) => void,
  *   setFilterQuery: (value: string) => void,
  *   setVolume: (level: number) => void,
  *   seekTo: (ratio: number) => void,
+ *   toggleFavoriteTrack: (trackId: string) => void,
  *   toggleMute: () => void,
  *   togglePlayback: () => Promise<void>
  * }}
  */
-import { DEFAULT_VOLUME } from "../config/appConfig.js";
-import { filterTracks } from "./filterTracks.js";
-import { clampNumber } from "../utils/clampNumber.js";
-
 export function createPlayerController({
   audioAdapter,
   initialPreferences = {},
@@ -53,7 +55,11 @@ export function createPlayerController({
   let selectedIndex = getInitialSelectedIndex(tracks, initialPreferences.selectedTrackId);
   let isPlaying = false;
   let isMuted = Boolean(initialPreferences.isMuted);
+  let filterMode = FILTER_MODES.ALL;
   let filterQuery = "";
+  const favoriteTrackIds = new Set(
+    Array.isArray(initialPreferences.favoriteTrackIds) ? initialPreferences.favoriteTrackIds : []
+  );
   let message = tracks.length === 0 ? messages.EMPTY_PLAYLIST : messages.LOADING;
   let volume = clampNumber(Number(initialPreferences.volume), 0, 1, DEFAULT_VOLUME);
 
@@ -74,22 +80,39 @@ export function createPlayerController({
   }
 
   /**
+   * Resolves the current playlist empty-state message.
+   * @param {number} resultCount The number of filtered tracks.
+   * @returns {string} The empty-state message for the active filters.
+   */
+  function getPlaylistMessage(resultCount) {
+    if (resultCount > 0) {
+      return "";
+    }
+
+    return filterMode === FILTER_MODES.FAVORITES ? messages.FAVORITES_EMPTY : messages.SEARCH_EMPTY;
+  }
+
+  /**
    * Produces the current player view model.
    * @returns {object}
    */
   function buildState() {
     const selectedTrack = tracks[selectedIndex] ?? null;
-    const filteredTracks = filterTracks(tracks, filterQuery);
+    const filteredTracks = filterTracks(tracks, filterQuery, favoriteTrackIds, filterMode);
+    const favoriteTracks = tracks.filter((track) => favoriteTrackIds.has(track.id));
 
     return {
       currentTimeSeconds: audioAdapter.getCurrentTime(),
       durationSeconds: audioAdapter.getDuration() || selectedTrack?.durationSeconds || 0,
+      favoriteTrackIds: [...favoriteTrackIds],
+      favoriteTracks,
+      filterMode,
       filterQuery,
       filteredTracks,
       isPlaying,
       isMuted,
       message,
-      playlistMessage: filteredTracks.length === 0 ? messages.SEARCH_EMPTY : "",
+      playlistMessage: getPlaylistMessage(filteredTracks.length),
       selectedTrack,
       tracks,
       volume
@@ -110,6 +133,7 @@ export function createPlayerController({
    */
   function persistPreferences() {
     onPreferencesChange({
+      favoriteTrackIds: [...favoriteTrackIds],
       isMuted,
       selectedTrackId: tracks[selectedIndex]?.id ?? null,
       volume
@@ -257,6 +281,16 @@ export function createPlayerController({
     },
 
     /**
+     * Updates the active playlist mode.
+     * @param {string} value The requested filter mode.
+     * @returns {void}
+     */
+    setFilterMode(value) {
+      filterMode = value === FILTER_MODES.FAVORITES ? FILTER_MODES.FAVORITES : FILTER_MODES.ALL;
+      notify();
+    },
+
+    /**
      * Updates the playlist search query without changing playback state.
      * @param {string} value The latest search text.
      * @returns {void}
@@ -291,6 +325,28 @@ export function createPlayerController({
      */
     seekTo(ratio) {
       audioAdapter.seekToRatio(ratio);
+      notify();
+    },
+
+    /**
+     * Toggles whether a track is marked as a favorite.
+     * @param {string} trackId The track to update.
+     * @returns {void}
+     */
+    toggleFavoriteTrack(trackId) {
+      const trackExists = tracks.some((track) => track.id === trackId);
+
+      if (!trackExists) {
+        return;
+      }
+
+      if (favoriteTrackIds.has(trackId)) {
+        favoriteTrackIds.delete(trackId);
+      } else {
+        favoriteTrackIds.add(trackId);
+      }
+
+      persistPreferences();
       notify();
     },
 

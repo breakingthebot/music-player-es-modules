@@ -5,25 +5,30 @@
  * Created: 2026-06-25
  */
 
+import { FILTER_MODES } from "../config/appConfig.js";
 import { normalizeSearchText } from "../utils/normalizeSearchText.js";
 
 /**
  * Filters a playlist by matching normalized title and artist text.
- * @param {Array<{ artist: string, title: string }>} tracks The playlist tracks to filter.
+ * @param {Array<{ artist: string, id: string, title: string }>} tracks The playlist tracks to filter.
  * @param {string} query The free-text query entered by the user.
- * @returns {Array<{ artist: string, title: string }>} The filtered track list.
+ * @param {Set<string>} [favoriteTrackIds] The persisted favorite track identifiers.
+ * @param {string} [filterMode] The active playlist mode.
+ * @returns {Array<{ artist: string, id: string, title: string }>} The filtered track list.
  */
-export function filterTracks(tracks, query) {
+export function filterTracks(tracks, query, favoriteTrackIds = new Set(), filterMode = FILTER_MODES.ALL) {
   const normalizedQuery = normalizeSearchText(query);
+  const modeFilteredTracks = filterMode === FILTER_MODES.FAVORITES
+    ? tracks.filter((track) => favoriteTrackIds.has(track.id))
+    : tracks;
 
   if (!normalizedQuery) {
-    return tracks;
+    return modeFilteredTracks;
   }
 
-  return tracks.filter((track) => {
+  return modeFilteredTracks.filter((track) => {
     const searchableText = normalizeSearchText(`${track.title} ${track.artist}`);
 
     return searchableText.includes(normalizedQuery);
   });
 }
-
