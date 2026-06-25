@@ -44,4 +44,3 @@ export function renderPlaylist({ container, onTrackSelect, selectedTrackId, trac
     container.append(item);
   }
 }
-

@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.0] - 2026-06-25
+### Added
+- Search input for playlist filtering by title or artist.
+- Keyboard-friendly playlist search behavior with clear and focus shortcuts.
+- Filter service and controller tests covering search matches and no-result states.
+
+### Changed
+- Updated playlist rendering with a dedicated no-results message instead of a blank list.
+- Refreshed README architecture notes for the searchable playlist flow.
+
 ## [0.2.0] - 2026-06-25
 ### Added
 - Volume slider, mute toggle, and keyboard shortcuts for playback controls.

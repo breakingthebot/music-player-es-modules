@@ -217,3 +217,43 @@ test("controller toggles mute without changing volume", () => {
   assert.equal(states.at(-1).isMuted, true);
   assert.equal(states.at(-1).volume, 0.5);
 });
+
+test("controller filters playlist results without changing the selected track", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages: {
+      ...messages,
+      SEARCH_EMPTY: "No matches."
+    },
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.setFilterQuery("two");
+
+  assert.equal(states.at(-1).selectedTrack.id, "one");
+  assert.deepEqual(states.at(-1).filteredTracks.map((track) => track.id), ["two"]);
+});
+
+test("controller exposes empty playlist search messaging", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages: {
+      ...messages,
+      SEARCH_EMPTY: "No matches."
+    },
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.setFilterQuery("missing");
+
+  assert.equal(states.at(-1).playlistMessage, "No matches.");
+  assert.equal(states.at(-1).filteredTracks.length, 0);
+});

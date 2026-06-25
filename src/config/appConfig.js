@@ -12,7 +12,8 @@ export const APP_MESSAGES = {
   LOADING: "Loading tracks.",
   PAUSED: "Playback paused.",
   PLAYING: "Playback in progress.",
-  READY: "Track ready."
+  READY: "Track ready.",
+  SEARCH_EMPTY: "No tracks match the current search."
 };
 
 export const DEFAULT_VOLUME = 0.72;

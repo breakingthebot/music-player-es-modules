@@ -12,6 +12,7 @@ import { formatTime } from "../utils/formatTime.js";
 /**
  * Creates the DOM view adapter for the music player interface.
  * @param {{
+ *   onFilterChange: (value: string) => void,
  *   onNext: () => void,
  *   onPrevious: () => void,
  *   onSetVolume: (level: number) => void,
@@ -34,7 +35,10 @@ export function createPlayerView(callbacks) {
   const muteButton = document.querySelector("#mute-button");
   const previousButton = document.querySelector("#previous-button");
   const nextButton = document.querySelector("#next-button");
+  const playlistSearchInput = document.querySelector("#playlist-search");
+  const clearSearchButton = document.querySelector("#clear-search-button");
   const playlist = document.querySelector("#playlist");
+  const playlistEmptyState = document.querySelector("#playlist-empty-state");
   const shortcutHint = document.querySelector("#shortcut-hint");
 
   previousButton.addEventListener("click", callbacks.onPrevious);
@@ -51,6 +55,30 @@ export function createPlayerView(callbacks) {
     const level = Number(event.currentTarget.value) / VOLUME_RANGE_MAX;
     callbacks.onSetVolume(level);
   });
+  playlistSearchInput.addEventListener("input", (event) => {
+    callbacks.onFilterChange(event.currentTarget.value);
+  });
+  clearSearchButton.addEventListener("click", () => {
+    playlistSearchInput.value = "";
+    callbacks.onFilterChange("");
+    playlistSearchInput.focus();
+  });
+  playlistSearchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      playlistSearchInput.value = "";
+      callbacks.onFilterChange("");
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      const firstTrackButton = playlist.querySelector("button");
+
+      if (firstTrackButton instanceof HTMLButtonElement) {
+        event.preventDefault();
+        firstTrackButton.focus();
+      }
+    }
+  });
 
   return {
     /**
@@ -58,9 +86,12 @@ export function createPlayerView(callbacks) {
      * @param {{
      *   currentTimeSeconds: number,
      *   durationSeconds: number,
-      *   isPlaying: boolean,
+     *   filterQuery: string,
+     *   filteredTracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>,
+     *   isPlaying: boolean,
      *   isMuted: boolean,
      *   message: string,
+     *   playlistMessage: string,
      *   selectedTrack: { id: string, title: string, artist: string } | null,
      *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>,
      *   volume: number
@@ -68,7 +99,18 @@ export function createPlayerView(callbacks) {
      * @returns {void}
      */
     render(state) {
-      const { currentTimeSeconds, durationSeconds, isMuted, isPlaying, message, selectedTrack, tracks, volume } = state;
+      const {
+        currentTimeSeconds,
+        durationSeconds,
+        filterQuery,
+        filteredTracks,
+        isMuted,
+        isPlaying,
+        message,
+        playlistMessage,
+        selectedTrack,
+        volume
+      } = state;
       const durationValue = durationSeconds || 0;
       const progressRatio = durationValue > 0 ? currentTimeSeconds / durationValue : 0;
       const hasTrack = Boolean(selectedTrack);
@@ -89,13 +131,21 @@ export function createPlayerView(callbacks) {
       volumeSlider.value = `${Math.round(volume * VOLUME_RANGE_MAX)}`;
       shortcutHint.textContent = "Shortcuts: Space play/pause, Left/Right previous/next, M mute";
 
+      if (playlistSearchInput.value !== filterQuery) {
+        playlistSearchInput.value = filterQuery;
+      }
+
+      clearSearchButton.disabled = filterQuery.length === 0;
+      playlistEmptyState.hidden = filteredTracks.length > 0;
+      playlistEmptyState.textContent = playlistMessage || "";
+
       renderPlaylist({
         container: playlist,
         onTrackSelect: (trackId) => {
           void callbacks.onTrackSelect(trackId);
         },
         selectedTrackId: selectedTrack?.id,
-        tracks
+        tracks: filteredTracks
       });
     }
   };

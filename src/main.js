@@ -20,6 +20,7 @@ const preferencesStore = createPreferencesStore(window.localStorage);
 const initialPreferences = preferencesStore.load();
 
 const view = createPlayerView({
+  onFilterChange: (value) => controller.setFilterQuery(value),
   onNext: () => controller.next(),
   onPrevious: () => controller.previous(),
   onSetVolume: (level) => controller.setVolume(level),

@@ -31,6 +31,7 @@
  *   next: () => void,
  *   playSelectedTrack: (trackId: string) => Promise<void>,
  *   previous: () => void,
+ *   setFilterQuery: (value: string) => void,
  *   setVolume: (level: number) => void,
  *   seekTo: (ratio: number) => void,
  *   toggleMute: () => void,
@@ -38,6 +39,7 @@
  * }}
  */
 import { DEFAULT_VOLUME } from "../config/appConfig.js";
+import { filterTracks } from "./filterTracks.js";
 import { clampNumber } from "../utils/clampNumber.js";
 
 export function createPlayerController({
@@ -51,6 +53,7 @@ export function createPlayerController({
   let selectedIndex = getInitialSelectedIndex(tracks, initialPreferences.selectedTrackId);
   let isPlaying = false;
   let isMuted = Boolean(initialPreferences.isMuted);
+  let filterQuery = "";
   let message = tracks.length === 0 ? messages.EMPTY_PLAYLIST : messages.LOADING;
   let volume = clampNumber(Number(initialPreferences.volume), 0, 1, DEFAULT_VOLUME);
 
@@ -76,13 +79,17 @@ export function createPlayerController({
    */
   function buildState() {
     const selectedTrack = tracks[selectedIndex] ?? null;
+    const filteredTracks = filterTracks(tracks, filterQuery);
 
     return {
       currentTimeSeconds: audioAdapter.getCurrentTime(),
       durationSeconds: audioAdapter.getDuration() || selectedTrack?.durationSeconds || 0,
+      filterQuery,
+      filteredTracks,
       isPlaying,
       isMuted,
       message,
+      playlistMessage: filteredTracks.length === 0 ? messages.SEARCH_EMPTY : "",
       selectedTrack,
       tracks,
       volume
@@ -247,6 +254,16 @@ export function createPlayerController({
       if (tracks.length > 0) {
         void playIndex(getWrappedIndex(-1));
       }
+    },
+
+    /**
+     * Updates the playlist search query without changing playback state.
+     * @param {string} value The latest search text.
+     * @returns {void}
+     */
+    setFilterQuery(value) {
+      filterQuery = `${value}`;
+      notify();
     },
 
     /**

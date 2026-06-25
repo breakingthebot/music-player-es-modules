@@ -74,7 +74,26 @@
           <div class="playlist-header">
             <h2 id="playlist-title">Playlist</h2>
             <p class="playlist-subtitle">Choose a track to start playback.</p>
+            <div class="playlist-search-row">
+              <div>
+                <label class="playlist-search-label" for="playlist-search">Search tracks</label>
+                <input
+                  id="playlist-search"
+                  class="playlist-search-input"
+                  type="search"
+                  placeholder="Search by title or artist"
+                  aria-describedby="playlist-search-help"
+                />
+              </div>
+              <button id="clear-search-button" type="button" class="control-button control-button-secondary">
+                Clear
+              </button>
+            </div>
+            <p id="playlist-search-help" class="playlist-search-help">
+              Press Down Arrow to jump into results. Press Escape to clear the search.
+            </p>
           </div>
+          <p id="playlist-empty-state" class="playlist-empty-state" hidden>No tracks match the current search.</p>
           <ul id="playlist" class="playlist" aria-live="polite"></ul>
         </section>
       </section>

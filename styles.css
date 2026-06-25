@@ -81,7 +81,9 @@ input {
 .hero-copy,
 #track-meta,
 .playlist-subtitle,
-.player-message {
+.player-message,
+.playlist-search-help,
+.playlist-empty-state {
   color: var(--muted);
 }
 
@@ -178,12 +180,51 @@ input {
   background: var(--accent-dark);
 }
 
+.control-button-secondary {
+  background: #efe4d8;
+}
+
 .playlist {
   list-style: none;
   margin: 1rem 0 0;
   padding: 0;
   display: grid;
   gap: 0.75rem;
+}
+
+.playlist-search-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-top: 1rem;
+}
+
+.playlist-search-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.playlist-search-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.8rem 0.95rem;
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.playlist-search-input:focus-visible {
+  outline: 2px solid rgba(193, 92, 45, 0.45);
+  outline-offset: 2px;
+}
+
+.playlist-search-help,
+.playlist-empty-state {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
 }
 
 .playlist-item {
@@ -254,6 +295,10 @@ input {
 
 @media (max-width: 640px) {
   .volume-row {
+    grid-template-columns: 1fr;
+  }
+
+  .playlist-search-row {
     grid-template-columns: 1fr;
   }
 }
