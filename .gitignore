@@ -16,4 +16,6 @@ dist/
 build/
 coverage/
 .vercel/
+playwright-report/
+test-results/
 AGENTS.md

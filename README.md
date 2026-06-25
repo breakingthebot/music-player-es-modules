@@ -6,6 +6,7 @@ A browser-based music player built with native ES modules, modular JavaScript fi
 - HTML5 and CSS3
 - Vanilla JavaScript with native ES modules
 - Node.js for the local static server and test runner
+- Playwright for browser interaction testing
 
 ## Setup
 1. Install Node.js 22 or newer.
@@ -20,14 +21,16 @@ See `.env.example` for the canonical placeholder.
 ## Running Locally
 - Start the app: `node server.js`
 - Run the test suite: `node --test`
+- Run the browser interaction test: `npm run test:browser`
+- Run the combined CI-equivalent checks: `npm run test:ci`
 
 ## Deployed
 Not deployed in this iteration.
 
 ## Architecture Notes
-This iteration adds per-track resume positions on top of the recent-history system. The controller now keeps a small map of saved playback seconds by track ID, restores those values when metadata is available, and persists updated progress alongside favorites, recents, and the selected track. That keeps resume logic in the same state boundary as playback rather than scattering it between the audio element and the view.
+This iteration adds the first real CI path instead of treating local testing as enough. The project now has a GitHub Actions workflow that installs dependencies, provisions Playwright’s Chromium browser, and runs both the existing unit suite and a browser-level interaction spec. That browser spec stubs audio deterministically, which keeps the test focused on app behavior instead of network audio quirks or autoplay restrictions.
 
-The recent list is now more useful because it shows whether a track resumes from a saved timestamp or starts fresh. Resume persistence is intentionally bounded to meaningful playback progress, so the app avoids cluttering storage with a few accidental seconds at the start of a track. This sets up the player for stronger long-form listening behavior without changing the modular file boundaries.
+The browser test covers the core user flows that now define the app: playback controls, playlist search, favorites filtering, and recently played resume metadata. The test harness starts the local server explicitly and shuts it down cleanly, which keeps the no-bundler architecture intact while still giving the repo a dependable automated gate for future iterations.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.
@@ -37,3 +40,4 @@ The recent list is now more useful because it shows whether a track resumes from
 - Favorite tracks are persisted locally and can be filtered as their own playlist view.
 - Recently played tracks are persisted locally in a bounded, de-duplicated history.
 - Track playback position is persisted per track so recent items can resume from their saved timestamp.
+- GitHub Actions runs both unit tests and a Playwright browser interaction test on pushes and pull requests.

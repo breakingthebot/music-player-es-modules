@@ -1,12 +1,14 @@
 {
   "name": "music-player-es-modules",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "A modular browser music player built with native ES modules and no bundler.",
   "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:browser": "node scripts/runPlaywrightTests.js",
+    "test:ci": "npm run test && npm run test:browser"
   },
   "keywords": [
     "music-player",
@@ -15,5 +17,8 @@
     "no-bundler"
   ],
   "author": "Marvin",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.61.1"
+  }
 }

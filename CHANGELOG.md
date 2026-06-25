@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.7.0] - 2026-06-25
+### Added
+- GitHub Actions CI workflow for unit and browser interaction tests.
+- Playwright browser test covering playback, search, favorites, and recent-track resume behavior.
+- Cross-platform browser test runner that starts and stops the local server explicitly.
+
+### Changed
+- Updated README setup and architecture notes for the CI and browser test flow.
+- Added Playwright test artifacts to `.gitignore`.
+
 ## [0.6.0] - 2026-06-25
 ### Added
 - Per-track playback position persistence with saved resume timestamps.

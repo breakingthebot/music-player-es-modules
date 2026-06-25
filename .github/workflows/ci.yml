@@ -1,0 +1,35 @@
+# .github/workflows/ci.yml
+# Runs unit tests and browser interaction tests for every push and pull request.
+# Connects to: package.json, playwright.config.js
+# Created: 2026-06-25
+
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run unit and browser tests
+        run: npm run test:ci
