@@ -13,19 +13,20 @@ import { logger } from "../utils/logger.js";
  * Creates a small preference store around Web Storage.
  * @param {Storage} storage The browser storage implementation to use.
  * @returns {{
- *   load: () => { favoriteTrackIds: string[], isMuted: boolean, selectedTrackId: string | null, volume: number },
- *   save: (preferences: { favoriteTrackIds: string[], isMuted: boolean, selectedTrackId: string | null, volume: number }) => void
+ *   load: () => { favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, volume: number },
+ *   save: (preferences: { favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, volume: number }) => void
  * }}
  */
 export function createPreferencesStore(storage) {
   /**
    * Returns the default preference set.
-   * @returns {{ favoriteTrackIds: string[], isMuted: boolean, selectedTrackId: string | null, volume: number }}
+   * @returns {{ favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, volume: number }}
    */
   function getDefaults() {
     return {
       favoriteTrackIds: [],
       isMuted: false,
+      recentTrackIds: [],
       selectedTrackId: null,
       volume: DEFAULT_VOLUME
     };
@@ -34,7 +35,7 @@ export function createPreferencesStore(storage) {
   return {
     /**
      * Loads persisted preferences or returns safe defaults.
-     * @returns {{ favoriteTrackIds: string[], isMuted: boolean, selectedTrackId: string | null, volume: number }}
+     * @returns {{ favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, volume: number }}
      */
     load() {
       const defaults = getDefaults();
@@ -57,6 +58,9 @@ export function createPreferencesStore(storage) {
             ? parsedValue.favoriteTrackIds.filter((trackId) => typeof trackId === "string")
             : [],
           isMuted: Boolean(parsedValue.isMuted),
+          recentTrackIds: Array.isArray(parsedValue.recentTrackIds)
+            ? parsedValue.recentTrackIds.filter((trackId) => typeof trackId === "string")
+            : [],
           selectedTrackId: typeof parsedValue.selectedTrackId === "string"
             ? parsedValue.selectedTrackId
             : null,
@@ -73,7 +77,7 @@ export function createPreferencesStore(storage) {
 
     /**
      * Persists the latest player preferences for the next visit.
-     * @param {{ favoriteTrackIds: string[], isMuted: boolean, selectedTrackId: string | null, volume: number }} preferences The preferences to store.
+     * @param {{ favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, volume: number }} preferences The preferences to store.
      * @returns {void}
      */
     save(preferences) {
@@ -87,6 +91,9 @@ export function createPreferencesStore(storage) {
             ? preferences.favoriteTrackIds.filter((trackId) => typeof trackId === "string")
             : [],
           isMuted: Boolean(preferences.isMuted),
+          recentTrackIds: Array.isArray(preferences.recentTrackIds)
+            ? preferences.recentTrackIds.filter((trackId) => typeof trackId === "string")
+            : [],
           selectedTrackId: typeof preferences.selectedTrackId === "string"
             ? preferences.selectedTrackId
             : null,

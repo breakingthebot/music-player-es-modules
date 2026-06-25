@@ -25,9 +25,9 @@ See `.env.example` for the canonical placeholder.
 Not deployed in this iteration.
 
 ## Architecture Notes
-This iteration adds favorites as a persisted playlist layer rather than a one-off visual toggle. The controller now owns favorite track IDs alongside the existing playback and search state, while the preferences store persists those IDs with the rest of the player settings. That keeps the business rules for favorites in the same state boundary as playback, not scattered across DOM event handlers.
+This iteration adds a small, persistent recently played system so the app remembers what you listened to and makes it easy to jump back in. The controller now maintains a bounded most-recent-first history, the preferences store persists that history beside the rest of the player state, and the UI renders a compact recent list without mixing storage rules into the DOM layer.
 
-The playlist UI now supports two complementary filters: free-text search and favorites-only mode. Those filters stack cleanly, so users can search within favorites and still get explicit empty-state messaging when nothing matches. Track starring stays local to each playlist row, which makes the action quick without interrupting playback or forcing a separate management screen.
+The recent list is intentionally lightweight instead of turning into a full activity feed. It only keeps a short, de-duplicated history of tracks, which is enough to support a “resume listening” workflow while staying predictable and easy to test. Playback, favorites, filtering, and recents now all flow through the same controller boundary, so later iterations can add track-position resume or richer history without rewriting the state model.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.
@@ -35,3 +35,4 @@ The playlist UI now supports two complementary filters: free-text search and fav
 - Player preferences are saved in `localStorage` under a single project-specific key.
 - Playlist search matches against both track title and artist text.
 - Favorite tracks are persisted locally and can be filtered as their own playlist view.
+- Recently played tracks are persisted locally in a bounded, de-duplicated history.

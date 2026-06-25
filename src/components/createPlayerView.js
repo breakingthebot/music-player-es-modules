@@ -1,12 +1,13 @@
 /**
  * src/components/createPlayerView.js
  * Owns DOM references and translates controller state into UI updates.
- * Connects to: src/components/renderPlaylist.js, src/utils/formatTime.js
+ * Connects to: src/components/renderPlaylist.js, src/components/renderRecentTracks.js, src/utils/formatTime.js
  * Created: 2026-06-25
  */
 
 import { SEEK_RANGE_MAX, VOLUME_RANGE_MAX } from "../config/appConfig.js";
 import { renderPlaylist } from "./renderPlaylist.js";
+import { renderRecentTracks } from "./renderRecentTracks.js";
 import { formatTime } from "../utils/formatTime.js";
 
 /**
@@ -31,6 +32,9 @@ export function createPlayerView(callbacks) {
   const currentTime = document.querySelector("#current-time");
   const duration = document.querySelector("#duration");
   const playerMessage = document.querySelector("#player-message");
+  const recentTracksList = document.querySelector("#recent-tracks");
+  const recentTracksSection = document.querySelector("#recent-tracks-section");
+  const recentTracksSummary = document.querySelector("#recent-tracks-summary");
   const seekSlider = document.querySelector("#seek-slider");
   const volumeSlider = document.querySelector("#volume-slider");
   const playButton = document.querySelector("#play-button");
@@ -105,6 +109,7 @@ export function createPlayerView(callbacks) {
      *   isMuted: boolean,
      *   message: string,
      *   playlistMessage: string,
+     *   recentTracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>,
      *   selectedTrack: { id: string, title: string, artist: string } | null,
      *   volume: number
      * }} state The current player state.
@@ -123,6 +128,7 @@ export function createPlayerView(callbacks) {
         isPlaying,
         message,
         playlistMessage,
+        recentTracks,
         selectedTrack,
         volume
       } = state;
@@ -158,6 +164,18 @@ export function createPlayerView(callbacks) {
       clearSearchButton.disabled = filterQuery.length === 0;
       playlistEmptyState.hidden = filteredTracks.length > 0;
       playlistEmptyState.textContent = playlistMessage || "";
+      recentTracksSection.hidden = recentTracks.length === 0;
+      recentTracksSummary.textContent = recentTracks.length > 0
+        ? `Resume one of your last ${recentTracks.length} tracks.`
+        : "";
+
+      renderRecentTracks({
+        container: recentTracksList,
+        onTrackSelect: (trackId) => {
+          void callbacks.onTrackSelect(trackId);
+        },
+        recentTracks
+      });
 
       renderPlaylist({
         container: playlist,

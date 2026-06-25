@@ -21,6 +21,7 @@ test("preferences store loads defaults when storage is empty", () => {
   assert.deepEqual(store.load(), {
     favoriteTrackIds: [],
     isMuted: false,
+    recentTrackIds: [],
     selectedTrackId: null,
     volume: 0.72
   });
@@ -34,6 +35,7 @@ test("preferences store clamps and saves values", () => {
       return JSON.stringify({
         favoriteTrackIds: ["two", 4, "one"],
         isMuted: 1,
+        recentTrackIds: ["two", 8, "one"],
         selectedTrackId: "two",
         volume: 3
       });
@@ -48,6 +50,7 @@ test("preferences store clamps and saves values", () => {
   assert.deepEqual(store.load(), {
     favoriteTrackIds: ["two", "one"],
     isMuted: true,
+    recentTrackIds: ["two", "one"],
     selectedTrackId: "two",
     volume: 1
   });
@@ -55,6 +58,7 @@ test("preferences store clamps and saves values", () => {
   store.save({
     favoriteTrackIds: ["one", "two"],
     isMuted: false,
+    recentTrackIds: ["two", "one"],
     selectedTrackId: "one",
     volume: -4
   });
@@ -63,6 +67,7 @@ test("preferences store clamps and saves values", () => {
   assert.deepEqual(JSON.parse(savedValue), {
     favoriteTrackIds: ["one", "two"],
     isMuted: false,
+    recentTrackIds: ["two", "one"],
     selectedTrackId: "one",
     volume: 0
   });

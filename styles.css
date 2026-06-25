@@ -78,6 +78,11 @@ input {
   font-family: Georgia, "Times New Roman", serif;
 }
 
+.recent-tracks-section h3 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
 .hero-copy,
 #track-meta,
 .playlist-subtitle,
@@ -113,6 +118,49 @@ input {
   gap: 0.75rem;
   align-items: center;
   margin-top: 1rem;
+}
+
+.recent-tracks-section {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.recent-tracks-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.recent-tracks-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.recent-tracks {
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.85rem 0 0;
+  padding: 0;
+}
+
+.recent-track-button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-strong);
+  padding: 0.8rem 0.95rem;
+  cursor: pointer;
+}
+
+.recent-track-button:hover,
+.recent-track-button:focus-visible {
+  border-color: rgba(193, 92, 45, 0.45);
+  outline: none;
 }
 
 .seek-slider {

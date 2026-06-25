@@ -22,6 +22,7 @@ export const FILTER_MODES = {
   ALL: "all",
   FAVORITES: "favorites"
 };
+export const RECENT_TRACK_LIMIT = 5;
 export const SEEK_RANGE_MAX = 100;
 export const STORAGE_KEY = "music-player-preferences";
 export const VOLUME_RANGE_MAX = 100;

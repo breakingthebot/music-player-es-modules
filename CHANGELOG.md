@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.0] - 2026-06-25
+### Added
+- Recently played history with compact resume buttons in the player panel.
+- Bounded, de-duplicated recent-track persistence in local storage.
+- Utility and controller tests covering recent-history ordering and restoration.
+
+### Changed
+- Extended local preference storage to include recent track IDs.
+- Updated README architecture notes for the recently played flow.
+
 ## [0.4.0] - 2026-06-25
 ### Added
 - Favorite track toggles directly in each playlist row.

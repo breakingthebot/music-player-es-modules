@@ -173,6 +173,7 @@ test("controller applies and persists saved preferences", () => {
   assert.deepEqual(savedPreferences.at(-1), {
     favoriteTrackIds: [],
     isMuted: true,
+    recentTrackIds: ["two"],
     selectedTrackId: "two",
     volume: 0.35
   });
@@ -312,4 +313,39 @@ test("controller exposes favorites empty messaging", () => {
 
   assert.equal(states.at(-1).playlistMessage, "No favorites available.");
   assert.equal(states.at(-1).filteredTracks.length, 0);
+});
+
+test("controller records recently played tracks in most-recent order", async () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  await controller.playSelectedTrack("two");
+  await controller.playSelectedTrack("one");
+
+  assert.deepEqual(states.at(-1).recentTracks.map((track) => track.id), ["one", "two"]);
+});
+
+test("controller restores recent history from preferences", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    initialPreferences: {
+      recentTrackIds: ["two", "one"]
+    },
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+
+  assert.deepEqual(states.at(-1).recentTracks.map((track) => track.id), ["one", "two"]);
 });

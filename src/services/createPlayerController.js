@@ -5,9 +5,10 @@
  * Created: 2026-06-25
  */
 
-import { DEFAULT_VOLUME, FILTER_MODES } from "../config/appConfig.js";
+import { DEFAULT_VOLUME, FILTER_MODES, RECENT_TRACK_LIMIT } from "../config/appConfig.js";
 import { filterTracks } from "./filterTracks.js";
 import { clampNumber } from "../utils/clampNumber.js";
+import { updateRecentTrackIds } from "../utils/updateRecentTrackIds.js";
 
 /**
  * Creates the player controller that mediates between audio and UI.
@@ -23,10 +24,10 @@ import { clampNumber } from "../utils/clampNumber.js";
  *     setVolume: (value: number) => void,
  *     seekToRatio: (ratio: number) => void
  *   },
- *   initialPreferences?: { favoriteTrackIds?: string[], isMuted?: boolean, selectedTrackId?: string | null, volume?: number },
+ *   initialPreferences?: { favoriteTrackIds?: string[], isMuted?: boolean, recentTrackIds?: string[], selectedTrackId?: string | null, volume?: number },
  *   messages: Record<string, string>,
  *   onStateChange: (state: object) => void,
- *   onPreferencesChange?: (preferences: { favoriteTrackIds: string[], isMuted: boolean, selectedTrackId: string | null, volume: number }) => void,
+ *   onPreferencesChange?: (preferences: { favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, volume: number }) => void,
  *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>
  * }} dependencies The controller dependencies.
  * @returns {{
@@ -61,6 +62,9 @@ export function createPlayerController({
     Array.isArray(initialPreferences.favoriteTrackIds) ? initialPreferences.favoriteTrackIds : []
   );
   let message = tracks.length === 0 ? messages.EMPTY_PLAYLIST : messages.LOADING;
+  let recentTrackIds = Array.isArray(initialPreferences.recentTrackIds)
+    ? initialPreferences.recentTrackIds.filter((trackId) => tracks.some((track) => track.id === trackId))
+    : [];
   let volume = clampNumber(Number(initialPreferences.volume), 0, 1, DEFAULT_VOLUME);
 
   /**
@@ -93,6 +97,25 @@ export function createPlayerController({
   }
 
   /**
+   * Converts recent IDs into display-ready track records.
+   * @returns {Array<{ id: string, title: string, artist: string, durationSeconds: number }>}
+   */
+  function getRecentTracks() {
+    return recentTrackIds
+      .map((trackId) => tracks.find((track) => track.id === trackId) ?? null)
+      .filter(Boolean);
+  }
+
+  /**
+   * Inserts a track into the bounded recent history list.
+   * @param {string} trackId The played track ID.
+   * @returns {void}
+   */
+  function registerRecentTrack(trackId) {
+    recentTrackIds = updateRecentTrackIds(recentTrackIds, trackId, RECENT_TRACK_LIMIT);
+  }
+
+  /**
    * Produces the current player view model.
    * @returns {object}
    */
@@ -100,6 +123,7 @@ export function createPlayerController({
     const selectedTrack = tracks[selectedIndex] ?? null;
     const filteredTracks = filterTracks(tracks, filterQuery, favoriteTrackIds, filterMode);
     const favoriteTracks = tracks.filter((track) => favoriteTrackIds.has(track.id));
+    const recentTracks = getRecentTracks();
 
     return {
       currentTimeSeconds: audioAdapter.getCurrentTime(),
@@ -113,6 +137,7 @@ export function createPlayerController({
       isMuted,
       message,
       playlistMessage: getPlaylistMessage(filteredTracks.length),
+      recentTracks,
       selectedTrack,
       tracks,
       volume
@@ -135,6 +160,7 @@ export function createPlayerController({
     onPreferencesChange({
       favoriteTrackIds: [...favoriteTrackIds],
       isMuted,
+      recentTrackIds,
       selectedTrackId: tracks[selectedIndex]?.id ?? null,
       volume
     });
@@ -152,6 +178,7 @@ export function createPlayerController({
       return;
     }
 
+    registerRecentTrack(selectedTrack.id);
     message = messages.LOADING;
     audioAdapter.loadTrack(selectedTrack);
     persistPreferences();
@@ -378,7 +405,9 @@ export function createPlayerController({
         return;
       }
 
+      registerRecentTrack(tracks[selectedIndex].id);
       message = messages.BUFFERING;
+      persistPreferences();
       notify();
 
       try {
