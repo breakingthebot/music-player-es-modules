@@ -1,0 +1,20 @@
+{
+  "name": "music-player-es-modules",
+  "version": "0.1.0",
+  "description": "A modular browser music player built with native ES modules and no bundler.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "music-player",
+    "es-modules",
+    "vanilla-js",
+    "no-bundler"
+  ],
+  "author": "Marvin",
+  "license": "MIT"
+}
+
