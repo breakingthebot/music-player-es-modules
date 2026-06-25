@@ -13,14 +13,14 @@ import { logger } from "../utils/logger.js";
  * Creates a small preference store around Web Storage.
  * @param {Storage} storage The browser storage implementation to use.
  * @returns {{
- *   load: () => { favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, volume: number },
- *   save: (preferences: { favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, volume: number }) => void
+ *   load: () => { favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, trackProgressSeconds: Record<string, number>, volume: number },
+ *   save: (preferences: { favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, trackProgressSeconds: Record<string, number>, volume: number }) => void
  * }}
  */
 export function createPreferencesStore(storage) {
   /**
    * Returns the default preference set.
-   * @returns {{ favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, volume: number }}
+   * @returns {{ favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, trackProgressSeconds: Record<string, number>, volume: number }}
    */
   function getDefaults() {
     return {
@@ -28,6 +28,7 @@ export function createPreferencesStore(storage) {
       isMuted: false,
       recentTrackIds: [],
       selectedTrackId: null,
+      trackProgressSeconds: {},
       volume: DEFAULT_VOLUME
     };
   }
@@ -35,7 +36,7 @@ export function createPreferencesStore(storage) {
   return {
     /**
      * Loads persisted preferences or returns safe defaults.
-     * @returns {{ favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, volume: number }}
+     * @returns {{ favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, trackProgressSeconds: Record<string, number>, volume: number }}
      */
     load() {
       const defaults = getDefaults();
@@ -64,6 +65,13 @@ export function createPreferencesStore(storage) {
           selectedTrackId: typeof parsedValue.selectedTrackId === "string"
             ? parsedValue.selectedTrackId
             : null,
+          trackProgressSeconds: typeof parsedValue.trackProgressSeconds === "object" && parsedValue.trackProgressSeconds !== null
+            ? Object.fromEntries(
+              Object.entries(parsedValue.trackProgressSeconds).filter(([trackId, seconds]) => {
+                return typeof trackId === "string" && Number.isFinite(Number(seconds)) && Number(seconds) >= 0;
+              }).map(([trackId, seconds]) => [trackId, Math.floor(Number(seconds))])
+            )
+            : {},
           volume: clampNumber(Number(parsedValue.volume), 0, 1, DEFAULT_VOLUME)
         };
       } catch (error) {
@@ -77,7 +85,7 @@ export function createPreferencesStore(storage) {
 
     /**
      * Persists the latest player preferences for the next visit.
-     * @param {{ favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, volume: number }} preferences The preferences to store.
+     * @param {{ favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, trackProgressSeconds: Record<string, number>, volume: number }} preferences The preferences to store.
      * @returns {void}
      */
     save(preferences) {
@@ -97,6 +105,13 @@ export function createPreferencesStore(storage) {
           selectedTrackId: typeof preferences.selectedTrackId === "string"
             ? preferences.selectedTrackId
             : null,
+          trackProgressSeconds: typeof preferences.trackProgressSeconds === "object" && preferences.trackProgressSeconds !== null
+            ? Object.fromEntries(
+              Object.entries(preferences.trackProgressSeconds).filter(([trackId, seconds]) => {
+                return typeof trackId === "string" && Number.isFinite(Number(seconds)) && Number(seconds) >= 0;
+              }).map(([trackId, seconds]) => [trackId, Math.floor(Number(seconds))])
+            )
+            : {},
           volume: clampNumber(Number(preferences.volume), 0, 1, DEFAULT_VOLUME)
         }));
       } catch (error) {

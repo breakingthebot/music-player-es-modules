@@ -23,6 +23,7 @@ test("preferences store loads defaults when storage is empty", () => {
     isMuted: false,
     recentTrackIds: [],
     selectedTrackId: null,
+    trackProgressSeconds: {},
     volume: 0.72
   });
 });
@@ -37,6 +38,11 @@ test("preferences store clamps and saves values", () => {
         isMuted: 1,
         recentTrackIds: ["two", 8, "one"],
         selectedTrackId: "two",
+        trackProgressSeconds: {
+          one: 42,
+          two: "90",
+          bad: -1
+        },
         volume: 3
       });
     },
@@ -52,6 +58,10 @@ test("preferences store clamps and saves values", () => {
     isMuted: true,
     recentTrackIds: ["two", "one"],
     selectedTrackId: "two",
+    trackProgressSeconds: {
+      one: 42,
+      two: 90
+    },
     volume: 1
   });
 
@@ -60,6 +70,10 @@ test("preferences store clamps and saves values", () => {
     isMuted: false,
     recentTrackIds: ["two", "one"],
     selectedTrackId: "one",
+    trackProgressSeconds: {
+      one: 15,
+      two: 61
+    },
     volume: -4
   });
 
@@ -69,6 +83,10 @@ test("preferences store clamps and saves values", () => {
     isMuted: false,
     recentTrackIds: ["two", "one"],
     selectedTrackId: "one",
+    trackProgressSeconds: {
+      one: 15,
+      two: 61
+    },
     volume: 0
   });
 });

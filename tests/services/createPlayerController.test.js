@@ -52,6 +52,9 @@ function createFakeAudioAdapter() {
     seekToRatio(ratio) {
       currentTime = duration * ratio;
     },
+    seekToSeconds(seconds) {
+      currentTime = seconds;
+    },
     trigger(eventName) {
       const handler = eventHandlers.get(eventName);
 
@@ -175,6 +178,7 @@ test("controller applies and persists saved preferences", () => {
     isMuted: true,
     recentTrackIds: ["two"],
     selectedTrackId: "two",
+    trackProgressSeconds: {},
     volume: 0.35
   });
 });
@@ -348,4 +352,45 @@ test("controller restores recent history from preferences", () => {
   controller.bootstrap();
 
   assert.deepEqual(states.at(-1).recentTracks.map((track) => track.id), ["one", "two"]);
+});
+
+test("controller restores saved track progress on metadata load", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    initialPreferences: {
+      selectedTrackId: "two",
+      trackProgressSeconds: {
+        two: 42
+      }
+    },
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  audioAdapter.trigger("loadedmetadata");
+
+  assert.equal(states.at(-1).currentTimeSeconds, 42);
+});
+
+test("controller persists track progress after seeking", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const savedPreferences = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onPreferencesChange: (preferences) => savedPreferences.push(preferences),
+    onStateChange: () => {},
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.seekTo(0.5);
+
+  assert.deepEqual(savedPreferences.at(-1).trackProgressSeconds, {
+    one: 90
+  });
 });

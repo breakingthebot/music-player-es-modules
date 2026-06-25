@@ -25,9 +25,9 @@ See `.env.example` for the canonical placeholder.
 Not deployed in this iteration.
 
 ## Architecture Notes
-This iteration adds a small, persistent recently played system so the app remembers what you listened to and makes it easy to jump back in. The controller now maintains a bounded most-recent-first history, the preferences store persists that history beside the rest of the player state, and the UI renders a compact recent list without mixing storage rules into the DOM layer.
+This iteration adds per-track resume positions on top of the recent-history system. The controller now keeps a small map of saved playback seconds by track ID, restores those values when metadata is available, and persists updated progress alongside favorites, recents, and the selected track. That keeps resume logic in the same state boundary as playback rather than scattering it between the audio element and the view.
 
-The recent list is intentionally lightweight instead of turning into a full activity feed. It only keeps a short, de-duplicated history of tracks, which is enough to support a “resume listening” workflow while staying predictable and easy to test. Playback, favorites, filtering, and recents now all flow through the same controller boundary, so later iterations can add track-position resume or richer history without rewriting the state model.
+The recent list is now more useful because it shows whether a track resumes from a saved timestamp or starts fresh. Resume persistence is intentionally bounded to meaningful playback progress, so the app avoids cluttering storage with a few accidental seconds at the start of a track. This sets up the player for stronger long-form listening behavior without changing the modular file boundaries.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.
@@ -36,3 +36,4 @@ The recent list is intentionally lightweight instead of turning into a full acti
 - Playlist search matches against both track title and artist text.
 - Favorite tracks are persisted locally and can be filtered as their own playlist view.
 - Recently played tracks are persisted locally in a bounded, de-duplicated history.
+- Track playback position is persisted per track so recent items can resume from their saved timestamp.

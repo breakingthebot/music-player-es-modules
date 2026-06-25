@@ -16,6 +16,7 @@ import { logger } from "../utils/logger.js";
  *   on: (eventName: string, handler: EventListener) => void,
  *   pause: () => void,
  *   play: () => Promise<void>,
+ *   seekToSeconds: (seconds: number) => void,
  *   setMuted: (value: boolean) => void,
  *   setVolume: (value: number) => void,
  *   seekToRatio: (ratio: number) => void
@@ -77,6 +78,15 @@ export function createAudioAdapter() {
      */
     async play() {
       await audio.play();
+    },
+
+    /**
+     * Seeks to an exact time in seconds within the current track.
+     * @param {number} seconds The desired playback time.
+     * @returns {void}
+     */
+    seekToSeconds(seconds) {
+      audio.currentTime = Math.max(seconds, 0);
     },
 
     /**

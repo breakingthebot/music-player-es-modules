@@ -5,7 +5,12 @@
  * Created: 2026-06-25
  */
 
-import { DEFAULT_VOLUME, FILTER_MODES, RECENT_TRACK_LIMIT } from "../config/appConfig.js";
+import {
+  DEFAULT_VOLUME,
+  FILTER_MODES,
+  MINIMUM_PROGRESS_SECONDS,
+  RECENT_TRACK_LIMIT
+} from "../config/appConfig.js";
 import { filterTracks } from "./filterTracks.js";
 import { clampNumber } from "../utils/clampNumber.js";
 import { updateRecentTrackIds } from "../utils/updateRecentTrackIds.js";
@@ -20,14 +25,29 @@ import { updateRecentTrackIds } from "../utils/updateRecentTrackIds.js";
  *     on: (eventName: string, handler: EventListener) => void,
  *     pause: () => void,
  *     play: () => Promise<void>,
+ *     seekToSeconds: (seconds: number) => void,
  *     setMuted: (value: boolean) => void,
  *     setVolume: (value: number) => void,
  *     seekToRatio: (ratio: number) => void
  *   },
- *   initialPreferences?: { favoriteTrackIds?: string[], isMuted?: boolean, recentTrackIds?: string[], selectedTrackId?: string | null, volume?: number },
+ *   initialPreferences?: {
+ *     favoriteTrackIds?: string[],
+ *     isMuted?: boolean,
+ *     recentTrackIds?: string[],
+ *     selectedTrackId?: string | null,
+ *     trackProgressSeconds?: Record<string, number>,
+ *     volume?: number
+ *   },
  *   messages: Record<string, string>,
  *   onStateChange: (state: object) => void,
- *   onPreferencesChange?: (preferences: { favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, volume: number }) => void,
+ *   onPreferencesChange?: (preferences: {
+ *     favoriteTrackIds: string[],
+ *     isMuted: boolean,
+ *     recentTrackIds: string[],
+ *     selectedTrackId: string | null,
+ *     trackProgressSeconds: Record<string, number>,
+ *     volume: number
+ *   }) => void,
  *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>
  * }} dependencies The controller dependencies.
  * @returns {{
@@ -65,6 +85,7 @@ export function createPlayerController({
   let recentTrackIds = Array.isArray(initialPreferences.recentTrackIds)
     ? initialPreferences.recentTrackIds.filter((trackId) => tracks.some((track) => track.id === trackId))
     : [];
+  const trackProgressSeconds = { ...normalizeTrackProgress(initialPreferences.trackProgressSeconds, tracks) };
   let volume = clampNumber(Number(initialPreferences.volume), 0, 1, DEFAULT_VOLUME);
 
   /**
@@ -84,6 +105,26 @@ export function createPlayerController({
   }
 
   /**
+   * Sanitizes stored per-track progress values against the known playlist.
+   * @param {Record<string, number> | undefined} storedProgress The raw stored progress object.
+   * @param {Array<{ id: string }>} availableTracks The known tracks.
+   * @returns {Record<string, number>} The sanitized progress object.
+   */
+  function normalizeTrackProgress(storedProgress, availableTracks) {
+    if (typeof storedProgress !== "object" || storedProgress === null) {
+      return {};
+    }
+
+    const allowedTrackIds = new Set(availableTracks.map((track) => track.id));
+
+    return Object.fromEntries(
+      Object.entries(storedProgress).filter(([trackId, seconds]) => {
+        return allowedTrackIds.has(trackId) && Number.isFinite(Number(seconds)) && Number(seconds) >= 0;
+      }).map(([trackId, seconds]) => [trackId, Math.floor(Number(seconds))])
+    );
+  }
+
+  /**
    * Resolves the current playlist empty-state message.
    * @param {number} resultCount The number of filtered tracks.
    * @returns {string} The empty-state message for the active filters.
@@ -98,11 +139,22 @@ export function createPlayerController({
 
   /**
    * Converts recent IDs into display-ready track records.
-   * @returns {Array<{ id: string, title: string, artist: string, durationSeconds: number }>}
+   * @returns {Array<{ artist: string, id: string, resumeSeconds: number, title: string }>}
    */
   function getRecentTracks() {
     return recentTrackIds
-      .map((trackId) => tracks.find((track) => track.id === trackId) ?? null)
+      .map((trackId) => {
+        const track = tracks.find((currentTrack) => currentTrack.id === trackId) ?? null;
+
+        if (!track) {
+          return null;
+        }
+
+        return {
+          ...track,
+          resumeSeconds: trackProgressSeconds[trackId] ?? 0
+        };
+      })
       .filter(Boolean);
   }
 
@@ -113,6 +165,65 @@ export function createPlayerController({
    */
   function registerRecentTrack(trackId) {
     recentTrackIds = updateRecentTrackIds(recentTrackIds, trackId, RECENT_TRACK_LIMIT);
+  }
+
+  /**
+   * Persists a track's progress in seconds when it is meaningful to resume.
+   * @param {string} trackId The current track identifier.
+   * @param {number} seconds The current playback time.
+   * @param {boolean} forcePersist Whether this write should always trigger persistence.
+   * @returns {void}
+   */
+  function updateTrackProgress(trackId, seconds, forcePersist = false) {
+    const nextSeconds = Math.floor(Math.max(seconds, 0));
+    const previousSeconds = trackProgressSeconds[trackId] ?? 0;
+
+    if (nextSeconds < MINIMUM_PROGRESS_SECONDS) {
+      delete trackProgressSeconds[trackId];
+
+      if (forcePersist && previousSeconds !== 0) {
+        persistPreferences();
+      }
+
+      return;
+    }
+
+    trackProgressSeconds[trackId] = nextSeconds;
+
+    if (forcePersist || Math.abs(nextSeconds - previousSeconds) >= MINIMUM_PROGRESS_SECONDS) {
+      persistPreferences();
+    }
+  }
+
+  /**
+   * Clears saved progress after a track is effectively completed.
+   * @param {string} trackId The completed track identifier.
+   * @returns {void}
+   */
+  function clearTrackProgress(trackId) {
+    if (trackId in trackProgressSeconds) {
+      delete trackProgressSeconds[trackId];
+      persistPreferences();
+    }
+  }
+
+  /**
+   * Restores saved progress when metadata becomes available for the current track.
+   * @returns {void}
+   */
+  function restoreSavedTrackProgress() {
+    const selectedTrack = tracks[selectedIndex];
+
+    if (!selectedTrack) {
+      return;
+    }
+
+    const savedSeconds = trackProgressSeconds[selectedTrack.id] ?? 0;
+    const durationSeconds = audioAdapter.getDuration() || selectedTrack.durationSeconds;
+
+    if (savedSeconds >= MINIMUM_PROGRESS_SECONDS && savedSeconds < Math.max(durationSeconds - 3, MINIMUM_PROGRESS_SECONDS)) {
+      audioAdapter.seekToSeconds(savedSeconds);
+    }
   }
 
   /**
@@ -162,6 +273,7 @@ export function createPlayerController({
       isMuted,
       recentTrackIds,
       selectedTrackId: tracks[selectedIndex]?.id ?? null,
+      trackProgressSeconds,
       volume
     });
   }
@@ -217,6 +329,12 @@ export function createPlayerController({
   }
 
   audioAdapter.on("ended", () => {
+    const selectedTrack = tracks[selectedIndex];
+
+    if (selectedTrack) {
+      clearTrackProgress(selectedTrack.id);
+    }
+
     if (tracks.length > 0) {
       void playIndex(getWrappedIndex(1));
     }
@@ -236,10 +354,18 @@ export function createPlayerController({
   });
 
   audioAdapter.on("timeupdate", () => {
+    const selectedTrack = tracks[selectedIndex];
+
+    if (selectedTrack) {
+      updateTrackProgress(selectedTrack.id, audioAdapter.getCurrentTime(), false);
+    }
+
     notify();
   });
 
   audioAdapter.on("loadedmetadata", () => {
+    restoreSavedTrackProgress();
+
     if (!isPlaying) {
       message = messages.READY;
     }
@@ -352,6 +478,13 @@ export function createPlayerController({
      */
     seekTo(ratio) {
       audioAdapter.seekToRatio(ratio);
+
+      const selectedTrack = tracks[selectedIndex];
+
+      if (selectedTrack) {
+        updateTrackProgress(selectedTrack.id, audioAdapter.getCurrentTime(), true);
+      }
+
       notify();
     },
 
@@ -401,6 +534,13 @@ export function createPlayerController({
         audioAdapter.pause();
         isPlaying = false;
         message = messages.PAUSED;
+
+        const selectedTrack = tracks[selectedIndex];
+
+        if (selectedTrack) {
+          updateTrackProgress(selectedTrack.id, audioAdapter.getCurrentTime(), true);
+        }
+
         notify();
         return;
       }

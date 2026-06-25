@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.0] - 2026-06-25
+### Added
+- Per-track playback position persistence with saved resume timestamps.
+- Recent-track resume metadata that shows whether a track resumes from a saved time.
+- Controller tests covering seek persistence and restored saved playback position.
+
+### Changed
+- Extended local preference storage to include per-track progress seconds.
+- Updated README architecture notes for the resume-position flow.
+
 ## [0.5.0] - 2026-06-25
 ### Added
 - Recently played history with compact resume buttons in the player panel.

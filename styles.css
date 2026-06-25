@@ -163,6 +163,21 @@ input {
   outline: none;
 }
 
+.recent-track-title,
+.recent-track-meta {
+  display: block;
+}
+
+.recent-track-title {
+  font-weight: 700;
+}
+
+.recent-track-meta {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .seek-slider {
   width: 100%;
   accent-color: var(--accent);
