@@ -15,10 +15,14 @@
  *     on: (eventName: string, handler: EventListener) => void,
  *     pause: () => void,
  *     play: () => Promise<void>,
+ *     setMuted: (value: boolean) => void,
+ *     setVolume: (value: number) => void,
  *     seekToRatio: (ratio: number) => void
  *   },
+ *   initialPreferences?: { isMuted?: boolean, selectedTrackId?: string | null, volume?: number },
  *   messages: Record<string, string>,
  *   onStateChange: (state: object) => void,
+ *   onPreferencesChange?: (preferences: { isMuted: boolean, selectedTrackId: string | null, volume: number }) => void,
  *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>
  * }} dependencies The controller dependencies.
  * @returns {{
@@ -27,14 +31,44 @@
  *   next: () => void,
  *   playSelectedTrack: (trackId: string) => Promise<void>,
  *   previous: () => void,
+ *   setVolume: (level: number) => void,
  *   seekTo: (ratio: number) => void,
+ *   toggleMute: () => void,
  *   togglePlayback: () => Promise<void>
  * }}
  */
-export function createPlayerController({ audioAdapter, messages, onStateChange, tracks }) {
-  let selectedIndex = 0;
+import { DEFAULT_VOLUME } from "../config/appConfig.js";
+import { clampNumber } from "../utils/clampNumber.js";
+
+export function createPlayerController({
+  audioAdapter,
+  initialPreferences = {},
+  messages,
+  onPreferencesChange = () => {},
+  onStateChange,
+  tracks
+}) {
+  let selectedIndex = getInitialSelectedIndex(tracks, initialPreferences.selectedTrackId);
   let isPlaying = false;
+  let isMuted = Boolean(initialPreferences.isMuted);
   let message = tracks.length === 0 ? messages.EMPTY_PLAYLIST : messages.LOADING;
+  let volume = clampNumber(Number(initialPreferences.volume), 0, 1, DEFAULT_VOLUME);
+
+  /**
+   * Resolves the initial selected track index from preferences.
+   * @param {Array<{ id: string }>} availableTracks The available playlist.
+   * @param {string | null | undefined} selectedTrackId The stored selected track identifier.
+   * @returns {number} The valid initial playlist index.
+   */
+  function getInitialSelectedIndex(availableTracks, selectedTrackId) {
+    if (availableTracks.length === 0 || !selectedTrackId) {
+      return 0;
+    }
+
+    const matchedIndex = availableTracks.findIndex((track) => track.id === selectedTrackId);
+
+    return matchedIndex >= 0 ? matchedIndex : 0;
+  }
 
   /**
    * Produces the current player view model.
@@ -47,9 +81,11 @@ export function createPlayerController({ audioAdapter, messages, onStateChange, 
       currentTimeSeconds: audioAdapter.getCurrentTime(),
       durationSeconds: audioAdapter.getDuration() || selectedTrack?.durationSeconds || 0,
       isPlaying,
+      isMuted,
       message,
       selectedTrack,
-      tracks
+      tracks,
+      volume
     };
   }
 
@@ -59,6 +95,18 @@ export function createPlayerController({ audioAdapter, messages, onStateChange, 
    */
   function notify() {
     onStateChange(buildState());
+  }
+
+  /**
+   * Persists the user preference subset.
+   * @returns {void}
+   */
+  function persistPreferences() {
+    onPreferencesChange({
+      isMuted,
+      selectedTrackId: tracks[selectedIndex]?.id ?? null,
+      volume
+    });
   }
 
   /**
@@ -73,7 +121,9 @@ export function createPlayerController({ audioAdapter, messages, onStateChange, 
       return;
     }
 
+    message = messages.LOADING;
     audioAdapter.loadTrack(selectedTrack);
+    persistPreferences();
     notify();
   }
 
@@ -85,10 +135,16 @@ export function createPlayerController({ audioAdapter, messages, onStateChange, 
   async function playIndex(nextIndex) {
     selectedIndex = nextIndex;
     loadCurrentTrack();
-    await audioAdapter.play();
-    isPlaying = true;
-    message = messages.PLAYING;
+    message = messages.BUFFERING;
     notify();
+
+    try {
+      await audioAdapter.play();
+    } catch {
+      isPlaying = false;
+      message = messages.LOAD_ERROR;
+      notify();
+    }
   }
 
   /**
@@ -108,11 +164,28 @@ export function createPlayerController({ audioAdapter, messages, onStateChange, 
     }
   });
 
+  audioAdapter.on("playing", () => {
+    isPlaying = true;
+    message = messages.PLAYING;
+    notify();
+  });
+
+  audioAdapter.on("waiting", () => {
+    if (tracks.length > 0) {
+      message = messages.BUFFERING;
+      notify();
+    }
+  });
+
   audioAdapter.on("timeupdate", () => {
     notify();
   });
 
   audioAdapter.on("loadedmetadata", () => {
+    if (!isPlaying) {
+      message = messages.READY;
+    }
+
     notify();
   });
 
@@ -128,7 +201,10 @@ export function createPlayerController({ audioAdapter, messages, onStateChange, 
      * @returns {void}
      */
     bootstrap() {
+      audioAdapter.setVolume(volume);
+      audioAdapter.setMuted(isMuted);
       loadCurrentTrack();
+      persistPreferences();
       notify();
     },
 
@@ -174,12 +250,41 @@ export function createPlayerController({ audioAdapter, messages, onStateChange, 
     },
 
     /**
+     * Updates the player volume between 0 and 1.
+     * @param {number} level The desired volume level.
+     * @returns {void}
+     */
+    setVolume(level) {
+      volume = clampNumber(Number(level), 0, 1, DEFAULT_VOLUME);
+      audioAdapter.setVolume(volume);
+
+      if (isMuted && volume > 0) {
+        isMuted = false;
+        audioAdapter.setMuted(false);
+      }
+
+      persistPreferences();
+      notify();
+    },
+
+    /**
      * Seeks to a proportional position in the current track.
      * @param {number} ratio The desired position between 0 and 1.
      * @returns {void}
      */
     seekTo(ratio) {
       audioAdapter.seekToRatio(ratio);
+      notify();
+    },
+
+    /**
+     * Toggles the muted state without changing the saved volume level.
+     * @returns {void}
+     */
+    toggleMute() {
+      isMuted = !isMuted;
+      audioAdapter.setMuted(isMuted);
+      persistPreferences();
       notify();
     },
 
@@ -200,10 +305,16 @@ export function createPlayerController({ audioAdapter, messages, onStateChange, 
         return;
       }
 
-      await audioAdapter.play();
-      isPlaying = true;
-      message = messages.PLAYING;
+      message = messages.BUFFERING;
       notify();
+
+      try {
+        await audioAdapter.play();
+      } catch {
+        isPlaying = false;
+        message = messages.LOAD_ERROR;
+        notify();
+      }
     }
   };
 }

@@ -16,6 +16,8 @@ import { logger } from "../utils/logger.js";
  *   on: (eventName: string, handler: EventListener) => void,
  *   pause: () => void,
  *   play: () => Promise<void>,
+ *   setMuted: (value: boolean) => void,
+ *   setVolume: (value: number) => void,
  *   seekToRatio: (ratio: number) => void
  * }}
  */
@@ -78,6 +80,24 @@ export function createAudioAdapter() {
     },
 
     /**
+     * Sets the browser audio muted state.
+     * @param {boolean} value Whether audio output should be muted.
+     * @returns {void}
+     */
+    setMuted(value) {
+      audio.muted = value;
+    },
+
+    /**
+     * Sets the browser audio volume from 0 to 1.
+     * @param {number} value The desired volume ratio.
+     * @returns {void}
+     */
+    setVolume(value) {
+      audio.volume = Math.min(Math.max(value, 0), 1);
+    },
+
+    /**
      * Seeks to a percentage ratio within the current track.
      * @param {number} ratio The target ratio between 0 and 1.
      * @returns {void}
@@ -88,4 +108,3 @@ export function createAudioAdapter() {
     }
   };
 }
-

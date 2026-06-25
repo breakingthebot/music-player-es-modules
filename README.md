@@ -25,9 +25,11 @@ See `.env.example` for the canonical placeholder.
 Not deployed in this iteration.
 
 ## Architecture Notes
-This build starts with the smallest complete version of the player rather than a pile of disconnected files. The app loads a curated playlist, normalizes that data through a track model, pushes playback through an audio service, and keeps browser rendering inside dedicated UI modules. That separation keeps the music logic testable without a bundler and gives the next iterations clear extension points for features like progress persistence, filtering, or volume control.
+This iteration keeps the original structure intact and adds the first real layer of product polish. The player now remembers which track you last selected and what volume you used, which makes it feel like an actual tool instead of a disposable demo. That persistence stays outside the rendering layer in a dedicated preferences service, while the controller remains responsible for playback state, messaging, and UI updates.
+
+Keyboard shortcuts and volume controls were added without collapsing logic into the DOM layer. The browser view only handles user interactions and presentation, the audio adapter still isolates media APIs, and the controller coordinates state transitions like mute, buffering, and restore-on-load behavior. That keeps the app easy to extend in later iterations for filtering, favorites, or more advanced playback states.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.
 - The local server is dependency-free so the project can run from a fresh clone without package installation.
-
+- Player preferences are saved in `localStorage` under a single project-specific key.

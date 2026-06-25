@@ -54,6 +54,20 @@
             </button>
             <button id="next-button" type="button" class="control-button">Next</button>
           </div>
+          <div class="volume-row">
+            <button id="mute-button" type="button" class="control-button">Mute</button>
+            <label class="volume-label" for="volume-slider">Volume</label>
+            <input
+              id="volume-slider"
+              class="volume-slider"
+              type="range"
+              min="0"
+              max="100"
+              value="72"
+              aria-label="Adjust playback volume"
+            />
+          </div>
+          <p id="shortcut-hint" class="shortcut-hint">Shortcuts are loading.</p>
         </div>
 
         <section class="playlist-card" aria-labelledby="playlist-title">
@@ -69,4 +83,3 @@
     <script type="module" src="./src/main.js"></script>
   </body>
 </html>
-

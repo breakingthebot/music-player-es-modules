@@ -17,7 +17,9 @@ function createFakeAudioAdapter() {
   const eventHandlers = new Map();
   let currentTime = 0;
   let duration = 180;
+  let isMuted = false;
   let lastLoadedTrackId = null;
+  let volume = 1;
 
   return {
     getCurrentTime() {
@@ -34,7 +36,19 @@ function createFakeAudioAdapter() {
       eventHandlers.set(eventName, handler);
     },
     pause() {},
-    async play() {},
+    async play() {
+      const handler = eventHandlers.get("playing");
+
+      if (handler) {
+        handler(new Event("playing"));
+      }
+    },
+    setMuted(value) {
+      isMuted = value;
+    },
+    setVolume(value) {
+      volume = value;
+    },
     seekToRatio(ratio) {
       currentTime = duration * ratio;
     },
@@ -47,6 +61,12 @@ function createFakeAudioAdapter() {
     },
     getLastLoadedTrackId() {
       return lastLoadedTrackId;
+    },
+    getMuted() {
+      return isMuted;
+    },
+    getVolume() {
+      return volume;
     }
   };
 }
@@ -126,3 +146,74 @@ test("controller seeks within the current track", () => {
   assert.equal(states.at(-1).currentTimeSeconds, 90);
 });
 
+test("controller applies and persists saved preferences", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const savedPreferences = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    initialPreferences: {
+      isMuted: true,
+      selectedTrackId: "two",
+      volume: 0.35
+    },
+    messages,
+    onPreferencesChange: (preferences) => savedPreferences.push(preferences),
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+
+  assert.equal(audioAdapter.getLastLoadedTrackId(), "two");
+  assert.equal(audioAdapter.getMuted(), true);
+  assert.equal(audioAdapter.getVolume(), 0.35);
+  assert.equal(states.at(-1).selectedTrack.id, "two");
+  assert.deepEqual(savedPreferences.at(-1), {
+    isMuted: true,
+    selectedTrackId: "two",
+    volume: 0.35
+  });
+});
+
+test("controller updates volume and unmutes when needed", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    initialPreferences: {
+      isMuted: true,
+      volume: 0.2
+    },
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.setVolume(0.6);
+
+  assert.equal(audioAdapter.getVolume(), 0.6);
+  assert.equal(audioAdapter.getMuted(), false);
+  assert.equal(states.at(-1).isMuted, false);
+  assert.equal(states.at(-1).volume, 0.6);
+});
+
+test("controller toggles mute without changing volume", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.setVolume(0.5);
+  controller.toggleMute();
+
+  assert.equal(audioAdapter.getMuted(), true);
+  assert.equal(states.at(-1).isMuted, true);
+  assert.equal(states.at(-1).volume, 0.5);
+});

@@ -5,7 +5,7 @@
  * Created: 2026-06-25
  */
 
-import { SEEK_RANGE_MAX } from "../config/appConfig.js";
+import { SEEK_RANGE_MAX, VOLUME_RANGE_MAX } from "../config/appConfig.js";
 import { renderPlaylist } from "./renderPlaylist.js";
 import { formatTime } from "../utils/formatTime.js";
 
@@ -14,7 +14,9 @@ import { formatTime } from "../utils/formatTime.js";
  * @param {{
  *   onNext: () => void,
  *   onPrevious: () => void,
+ *   onSetVolume: (level: number) => void,
  *   onSeek: (ratio: number) => void,
+ *   onToggleMute: () => void,
  *   onTogglePlayback: () => void,
  *   onTrackSelect: (trackId: string) => void
  * }} callbacks Player interaction callbacks.
@@ -27,19 +29,27 @@ export function createPlayerView(callbacks) {
   const duration = document.querySelector("#duration");
   const playerMessage = document.querySelector("#player-message");
   const seekSlider = document.querySelector("#seek-slider");
+  const volumeSlider = document.querySelector("#volume-slider");
   const playButton = document.querySelector("#play-button");
+  const muteButton = document.querySelector("#mute-button");
   const previousButton = document.querySelector("#previous-button");
   const nextButton = document.querySelector("#next-button");
   const playlist = document.querySelector("#playlist");
+  const shortcutHint = document.querySelector("#shortcut-hint");
 
   previousButton.addEventListener("click", callbacks.onPrevious);
   nextButton.addEventListener("click", callbacks.onNext);
+  muteButton.addEventListener("click", callbacks.onToggleMute);
   playButton.addEventListener("click", () => {
     void callbacks.onTogglePlayback();
   });
   seekSlider.addEventListener("input", (event) => {
     const ratio = Number(event.currentTarget.value) / SEEK_RANGE_MAX;
     callbacks.onSeek(ratio);
+  });
+  volumeSlider.addEventListener("input", (event) => {
+    const level = Number(event.currentTarget.value) / VOLUME_RANGE_MAX;
+    callbacks.onSetVolume(level);
   });
 
   return {
@@ -48,17 +58,20 @@ export function createPlayerView(callbacks) {
      * @param {{
      *   currentTimeSeconds: number,
      *   durationSeconds: number,
-     *   isPlaying: boolean,
+      *   isPlaying: boolean,
+     *   isMuted: boolean,
      *   message: string,
      *   selectedTrack: { id: string, title: string, artist: string } | null,
-     *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>
+     *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>,
+     *   volume: number
      * }} state The current player state.
      * @returns {void}
      */
     render(state) {
-      const { currentTimeSeconds, durationSeconds, isPlaying, message, selectedTrack, tracks } = state;
+      const { currentTimeSeconds, durationSeconds, isMuted, isPlaying, message, selectedTrack, tracks, volume } = state;
       const durationValue = durationSeconds || 0;
       const progressRatio = durationValue > 0 ? currentTimeSeconds / durationValue : 0;
+      const hasTrack = Boolean(selectedTrack);
 
       trackTitle.textContent = selectedTrack?.title ?? "No track selected";
       trackMeta.textContent = selectedTrack ? `${selectedTrack.artist}` : "Add tracks to begin playback.";
@@ -66,7 +79,15 @@ export function createPlayerView(callbacks) {
       duration.textContent = formatTime(durationValue);
       playerMessage.textContent = message;
       playButton.textContent = isPlaying ? "Pause" : "Play";
+      playButton.disabled = !hasTrack;
+      previousButton.disabled = !hasTrack;
+      nextButton.disabled = !hasTrack;
+      muteButton.disabled = !hasTrack;
+      muteButton.textContent = isMuted ? "Unmute" : "Mute";
       seekSlider.value = `${Math.min(Math.max(progressRatio * SEEK_RANGE_MAX, 0), SEEK_RANGE_MAX)}`;
+      seekSlider.disabled = !hasTrack;
+      volumeSlider.value = `${Math.round(volume * VOLUME_RANGE_MAX)}`;
+      shortcutHint.textContent = "Shortcuts: Space play/pause, Left/Right previous/next, M mute";
 
       renderPlaylist({
         container: playlist,
@@ -79,4 +100,3 @@ export function createPlayerView(callbacks) {
     }
   };
 }
-

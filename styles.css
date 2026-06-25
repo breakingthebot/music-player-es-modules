@@ -125,6 +125,24 @@ input {
   flex-wrap: wrap;
 }
 
+.volume-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.volume-label,
+.shortcut-hint {
+  color: var(--muted);
+}
+
+.volume-slider {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
 .control-button {
   border: 0;
   border-radius: 999px;
@@ -135,6 +153,12 @@ input {
   transition:
     transform 160ms ease,
     background-color 160ms ease;
+}
+
+.control-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
 }
 
 .control-button:hover,
@@ -203,6 +227,11 @@ input {
   color: var(--muted);
 }
 
+.shortcut-hint {
+  margin: 0.85rem 0 0;
+  font-size: 0.9rem;
+}
+
 @media (min-width: 860px) {
   .player-panel {
     grid-template-columns: minmax(280px, 1fr) minmax(420px, 1.15fr);
@@ -223,3 +252,8 @@ input {
   }
 }
 
+@media (max-width: 640px) {
+  .volume-row {
+    grid-template-columns: 1fr;
+  }
+}
