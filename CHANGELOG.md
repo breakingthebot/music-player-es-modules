@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.13.0] - 2026-06-26
+### Added
+- Local MP3 and WAV import controls in the playlist panel.
+- Runtime audio import service that converts selected files into in-app tracks with blob URLs and detected durations.
+- Controller, model, and browser coverage for imported local track playback.
+
+### Changed
+- Expanded the track model to accept secure blob URLs for browser-imported audio files.
+- Updated README architecture notes for the local audio import flow.
+
 ## [0.12.0] - 2026-06-26
 ### Added
 - `.vercelignore` to keep local-only files, test artifacts, editor settings, and `AGENTS.md` out of deployments.

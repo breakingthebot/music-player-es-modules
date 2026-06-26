@@ -12,7 +12,7 @@
  * @param {string} rawTrack.title The track title.
  * @param {string} rawTrack.artist The artist name.
  * @param {number} rawTrack.durationSeconds The expected track length in seconds.
- * @param {string} rawTrack.audioUrl The HTTPS audio source URL.
+ * @param {string} rawTrack.audioUrl The HTTPS or blob audio source URL.
  * @returns {{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }}
  */
 export function createTrack(rawTrack) {
@@ -32,10 +32,9 @@ export function createTrack(rawTrack) {
     throw new Error("Track duration must be a positive number.");
   }
 
-  if (!track.audioUrl.startsWith("https://")) {
-    throw new Error("Track audio URL must use HTTPS.");
+  if (!track.audioUrl.startsWith("https://") && !track.audioUrl.startsWith("blob:")) {
+    throw new Error("Track audio URL must use HTTPS or a browser blob URL.");
   }
 
   return Object.freeze(track);
 }
-

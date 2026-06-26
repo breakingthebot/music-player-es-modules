@@ -61,6 +61,7 @@ import { sortTracks } from "./sortTracks.js";
  *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>
  * }} dependencies The controller dependencies.
  * @returns {{
+ *   addTracks: (tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>) => void,
  *   bootstrap: () => void,
  *   cycleRepeatMode: () => void,
  *   getState: () => object,
@@ -91,7 +92,8 @@ export function createPlayerController({
   randomNumber = Math.random,
   tracks
 }) {
-  let selectedIndex = getInitialSelectedIndex(tracks, initialPreferences.selectedTrackId);
+  let playlistTracks = [...tracks];
+  let selectedIndex = getInitialSelectedIndex(playlistTracks, initialPreferences.selectedTrackId);
   let isPlaying = false;
   let isMuted = Boolean(initialPreferences.isMuted);
   let isShuffleEnabled = Boolean(initialPreferences.isShuffleEnabled);
@@ -106,12 +108,12 @@ export function createPlayerController({
   const favoriteTrackIds = new Set(
     Array.isArray(initialPreferences.favoriteTrackIds) ? initialPreferences.favoriteTrackIds : []
   );
-  let message = tracks.length === 0 ? messages.EMPTY_PLAYLIST : messages.LOADING;
+  let message = playlistTracks.length === 0 ? messages.EMPTY_PLAYLIST : messages.LOADING;
   let queuedTrackIds = [];
   let recentTrackIds = Array.isArray(initialPreferences.recentTrackIds)
-    ? initialPreferences.recentTrackIds.filter((trackId) => tracks.some((track) => track.id === trackId))
+    ? initialPreferences.recentTrackIds.filter((trackId) => playlistTracks.some((track) => track.id === trackId))
     : [];
-  const trackProgressSeconds = { ...normalizeTrackProgress(initialPreferences.trackProgressSeconds, tracks) };
+  const trackProgressSeconds = { ...normalizeTrackProgress(initialPreferences.trackProgressSeconds, playlistTracks) };
   let volume = clampNumber(Number(initialPreferences.volume), 0, 1, DEFAULT_VOLUME);
 
   /**
@@ -172,7 +174,7 @@ export function createPlayerController({
   function getRecentTracks() {
     return recentTrackIds
       .map((trackId) => {
-        const track = tracks.find((currentTrack) => currentTrack.id === trackId) ?? null;
+        const track = playlistTracks.find((currentTrack) => currentTrack.id === trackId) ?? null;
 
         if (!track) {
           return null;
@@ -192,34 +194,8 @@ export function createPlayerController({
    */
   function getQueuedTracks() {
     return queuedTrackIds
-      .map((trackId) => tracks.find((track) => track.id === trackId) ?? null)
+      .map((trackId) => playlistTracks.find((track) => track.id === trackId) ?? null)
       .filter(Boolean);
-  }
-
-  /**
-   * Moves a queued track by one position when the new position is valid.
-   * @param {string} trackId The queued track identifier.
-   * @param {-1 | 1} direction The queue movement direction.
-   * @returns {void}
-   */
-  function moveQueuedTrack(trackId, direction) {
-    const currentIndex = queuedTrackIds.findIndex((currentTrackId) => currentTrackId === trackId);
-
-    if (currentIndex < 0) {
-      return;
-    }
-
-    const nextIndex = currentIndex + direction;
-
-    if (nextIndex < 0 || nextIndex >= queuedTrackIds.length) {
-      return;
-    }
-
-    const nextQueuedTrackIds = [...queuedTrackIds];
-    const [movedTrackId] = nextQueuedTrackIds.splice(currentIndex, 1);
-    nextQueuedTrackIds.splice(nextIndex, 0, movedTrackId);
-    queuedTrackIds = nextQueuedTrackIds;
-    notify();
   }
 
   /**
@@ -276,7 +252,7 @@ export function createPlayerController({
    * @returns {void}
    */
   function restoreSavedTrackProgress() {
-    const selectedTrack = tracks[selectedIndex];
+    const selectedTrack = playlistTracks[selectedIndex];
 
     if (!selectedTrack) {
       return;
@@ -310,12 +286,12 @@ export function createPlayerController({
    * @returns {object}
    */
   function buildState() {
-    const selectedTrack = tracks[selectedIndex] ?? null;
+    const selectedTrack = playlistTracks[selectedIndex] ?? null;
     const filteredTracks = sortTracks(
-      filterTracks(tracks, filterQuery, favoriteTrackIds, filterMode),
+      filterTracks(playlistTracks, filterQuery, favoriteTrackIds, filterMode),
       sortMode
     );
-    const favoriteTracks = tracks.filter((track) => favoriteTrackIds.has(track.id));
+    const favoriteTracks = playlistTracks.filter((track) => favoriteTrackIds.has(track.id));
     const queuedTracks = getQueuedTracks();
     const recentTracks = getRecentTracks();
 
@@ -338,7 +314,7 @@ export function createPlayerController({
       repeatMode,
       selectedTrack,
       sortMode,
-      tracks,
+      tracks: playlistTracks,
       volume
     };
   }
@@ -362,7 +338,7 @@ export function createPlayerController({
       isShuffleEnabled,
       recentTrackIds,
       repeatMode,
-      selectedTrackId: tracks[selectedIndex]?.id ?? null,
+      selectedTrackId: playlistTracks[selectedIndex]?.id ?? null,
       sortMode,
       trackProgressSeconds,
       volume
@@ -374,7 +350,7 @@ export function createPlayerController({
    * @returns {void}
    */
   function loadCurrentTrack() {
-    const selectedTrack = tracks[selectedIndex];
+    const selectedTrack = playlistTracks[selectedIndex];
 
     if (!selectedTrack) {
       notify();
@@ -399,7 +375,7 @@ export function createPlayerController({
       return null;
     }
 
-    const nextIndex = tracks.findIndex((track) => track.id === nextQueuedTrackId);
+    const nextIndex = playlistTracks.findIndex((track) => track.id === nextQueuedTrackId);
 
     return nextIndex >= 0 ? nextIndex : null;
   }
@@ -409,11 +385,11 @@ export function createPlayerController({
    * @returns {number}
    */
   function getShuffledIndex() {
-    if (tracks.length <= 1) {
+    if (playlistTracks.length <= 1) {
       return selectedIndex;
     }
 
-    const candidateIndexes = tracks
+    const candidateIndexes = playlistTracks
       .map((track, index) => index)
       .filter((index) => index !== selectedIndex);
     const nextPosition = Math.floor(randomNumber() * candidateIndexes.length);
@@ -427,7 +403,7 @@ export function createPlayerController({
    * @returns {number | null}
    */
   function resolvePlaybackAdvanceIndex(reason) {
-    if (tracks.length === 0) {
+    if (playlistTracks.length === 0) {
       return null;
     }
 
@@ -439,7 +415,7 @@ export function createPlayerController({
       return getShuffledIndex();
     }
 
-    const lastIndex = tracks.length - 1;
+    const lastIndex = playlistTracks.length - 1;
 
     if (selectedIndex < lastIndex) {
       return selectedIndex + 1;
@@ -488,7 +464,7 @@ export function createPlayerController({
    * @returns {void}
    */
   function advancePlayback(reason) {
-    if (tracks.length === 0) {
+    if (playlistTracks.length === 0) {
       return;
     }
 
@@ -503,8 +479,34 @@ export function createPlayerController({
     void playIndex(nextIndex);
   }
 
+  /**
+   * Moves a queued track by one position when the new position is valid.
+   * @param {string} trackId The queued track identifier.
+   * @param {-1 | 1} direction The queue movement direction.
+   * @returns {void}
+   */
+  function moveQueuedTrack(trackId, direction) {
+    const currentIndex = queuedTrackIds.findIndex((currentTrackId) => currentTrackId === trackId);
+
+    if (currentIndex < 0) {
+      return;
+    }
+
+    const nextIndex = currentIndex + direction;
+
+    if (nextIndex < 0 || nextIndex >= queuedTrackIds.length) {
+      return;
+    }
+
+    const nextQueuedTrackIds = [...queuedTrackIds];
+    const [movedTrackId] = nextQueuedTrackIds.splice(currentIndex, 1);
+    nextQueuedTrackIds.splice(nextIndex, 0, movedTrackId);
+    queuedTrackIds = nextQueuedTrackIds;
+    notify();
+  }
+
   audioAdapter.on("ended", () => {
-    const selectedTrack = tracks[selectedIndex];
+    const selectedTrack = playlistTracks[selectedIndex];
 
     if (selectedTrack) {
       clearTrackProgress(selectedTrack.id);
@@ -520,14 +522,14 @@ export function createPlayerController({
   });
 
   audioAdapter.on("waiting", () => {
-    if (tracks.length > 0) {
+    if (playlistTracks.length > 0) {
       message = messages.BUFFERING;
       notify();
     }
   });
 
   audioAdapter.on("timeupdate", () => {
-    const selectedTrack = tracks[selectedIndex];
+    const selectedTrack = playlistTracks[selectedIndex];
 
     if (selectedTrack) {
       updateTrackProgress(selectedTrack.id, audioAdapter.getCurrentTime(), false);
@@ -553,6 +555,27 @@ export function createPlayerController({
   });
 
   return {
+    /**
+     * Appends imported tracks to the active playlist and refreshes the view state.
+     * @param {Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>} nextTracks Tracks to append.
+     * @returns {void}
+     */
+    addTracks(nextTracks) {
+      if (!Array.isArray(nextTracks) || nextTracks.length === 0) {
+        return;
+      }
+
+      playlistTracks = [...playlistTracks, ...nextTracks];
+
+      if (playlistTracks.length === nextTracks.length) {
+        selectedIndex = 0;
+        loadCurrentTrack();
+        return;
+      }
+
+      notify();
+    },
+
     /**
      * Loads the first track and sends the initial state to the view.
      * @returns {void}
@@ -619,7 +642,7 @@ export function createPlayerController({
      * @returns {Promise<void>}
      */
     async playSelectedTrack(trackId) {
-      const nextIndex = tracks.findIndex((track) => track.id === trackId);
+      const nextIndex = playlistTracks.findIndex((track) => track.id === trackId);
 
       if (nextIndex >= 0) {
         await playIndex(nextIndex);
@@ -631,8 +654,8 @@ export function createPlayerController({
      * @returns {void}
      */
     previous() {
-      if (tracks.length > 0) {
-        const nextIndex = selectedIndex > 0 ? selectedIndex - 1 : tracks.length - 1;
+      if (playlistTracks.length > 0) {
+        const nextIndex = selectedIndex > 0 ? selectedIndex - 1 : playlistTracks.length - 1;
         void playIndex(nextIndex);
       }
     },
@@ -643,8 +666,8 @@ export function createPlayerController({
      * @returns {void}
      */
     queueTrack(trackId) {
-      const trackExists = tracks.some((track) => track.id === trackId);
-      const selectedTrackId = tracks[selectedIndex]?.id ?? null;
+      const trackExists = playlistTracks.some((track) => track.id === trackId);
+      const selectedTrackId = playlistTracks[selectedIndex]?.id ?? null;
 
       if (!trackExists || queuedTrackIds.includes(trackId) || trackId === selectedTrackId) {
         return;
@@ -721,7 +744,7 @@ export function createPlayerController({
     seekTo(ratio) {
       audioAdapter.seekToRatio(ratio);
 
-      const selectedTrack = tracks[selectedIndex];
+      const selectedTrack = playlistTracks[selectedIndex];
 
       if (selectedTrack) {
         updateTrackProgress(selectedTrack.id, audioAdapter.getCurrentTime(), true);
@@ -736,7 +759,7 @@ export function createPlayerController({
      * @returns {void}
      */
     toggleFavoriteTrack(trackId) {
-      const trackExists = tracks.some((track) => track.id === trackId);
+      const trackExists = playlistTracks.some((track) => track.id === trackId);
 
       if (!trackExists) {
         return;
@@ -768,7 +791,7 @@ export function createPlayerController({
      * @returns {Promise<void>}
      */
     async togglePlayback() {
-      if (tracks.length === 0) {
+      if (playlistTracks.length === 0) {
         return;
       }
 
@@ -777,7 +800,7 @@ export function createPlayerController({
         isPlaying = false;
         message = messages.PAUSED;
 
-        const selectedTrack = tracks[selectedIndex];
+        const selectedTrack = playlistTracks[selectedIndex];
 
         if (selectedTrack) {
           updateTrackProgress(selectedTrack.id, audioAdapter.getCurrentTime(), true);
@@ -787,7 +810,7 @@ export function createPlayerController({
         return;
       }
 
-      registerRecentTrack(tracks[selectedIndex].id);
+      registerRecentTrack(playlistTracks[selectedIndex].id);
       message = messages.BUFFERING;
       persistPreferences();
       notify();

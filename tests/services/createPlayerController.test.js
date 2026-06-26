@@ -422,6 +422,37 @@ test("controller reorders queued tracks and uses the updated queue order", () =>
   assert.deepEqual(states.at(-1).queuedTracks.map((track) => track.id), ["two"]);
 });
 
+test("controller appends imported tracks into the active playlist", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.addTracks([
+    {
+      artist: "Local file",
+      audioUrl: "blob:local-track",
+      durationSeconds: 210,
+      id: "local-demo",
+      title: "Local Demo"
+    }
+  ]);
+
+  assert.equal(states.at(-1).tracks.length, 4);
+  assert.deepEqual(states.at(-1).filteredTracks.at(-1), {
+    artist: "Local file",
+    audioUrl: "blob:local-track",
+    durationSeconds: 210,
+    id: "local-demo",
+    title: "Local Demo"
+  });
+});
+
 test("controller uses shuffle mode when advancing manually", () => {
   const audioAdapter = createFakeAudioAdapter();
   const states = [];

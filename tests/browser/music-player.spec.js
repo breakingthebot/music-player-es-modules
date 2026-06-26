@@ -102,6 +102,14 @@ test("music player supports playback controls, queueing, playback modes, search,
   await expect(page.locator("#playback-mode-indicator")).toContainText("Shuffle on");
   await expect(page.locator("#playback-mode-indicator")).toContainText("Repeat all");
 
+  await page.locator("#playlist-import-input").setInputFiles({
+    mimeType: "audio/mpeg",
+    name: "Local Demo.mp3",
+    buffer: Buffer.from("fake-audio")
+  });
+  await expect(page.locator("#playlist-import-status")).toContainText("Imported 1 track");
+  await expect(playlistButtons.filter({ hasText: "Local Demo" })).toBeVisible();
+
   await page.getByLabel("Sort playlist tracks").selectOption("title-asc");
   await expect(playlistButtons.first()).toContainText("City Lights");
 

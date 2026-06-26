@@ -30,7 +30,19 @@ test("createTrack returns an immutable normalized track", () => {
   });
 });
 
-test("createTrack rejects non-https audio URLs", () => {
+test("createTrack allows blob URLs for imported local audio", () => {
+  const track = createTrack({
+    artist: "Local file",
+    audioUrl: "blob:example-track",
+    durationSeconds: 245,
+    id: "local-track",
+    title: "Imported Song"
+  });
+
+  assert.equal(track.audioUrl, "blob:example-track");
+});
+
+test("createTrack rejects unsupported audio URL schemes", () => {
   assert.throws(() => {
     createTrack({
       artist: "Example Artist",
@@ -39,6 +51,5 @@ test("createTrack rejects non-https audio URLs", () => {
       id: "demo",
       title: "Example Song"
     });
-  }, /HTTPS/);
+  }, /HTTPS or a browser blob URL/);
 });
-

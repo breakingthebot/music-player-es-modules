@@ -18,6 +18,7 @@ import { formatTime } from "../utils/formatTime.js";
  *   onCycleRepeatMode: () => void,
  *   onFilterChange: (value: string) => void,
  *   onFilterModeChange: (value: string) => void,
+ *   onImportTracks: (files: File[]) => Promise<string>,
  *   onMoveQueuedTrackDown: (trackId: string) => void,
  *   onMoveQueuedTrackUp: (trackId: string) => void,
  *   onNext: () => void,
@@ -58,6 +59,9 @@ export function createPlayerView(callbacks) {
   const playbackModeIndicator = document.querySelector("#playback-mode-indicator");
   const allTracksButton = document.querySelector("#all-tracks-button");
   const favoriteTracksButton = document.querySelector("#favorite-tracks-button");
+  const importInput = document.querySelector("#playlist-import-input");
+  const importButton = document.querySelector("#playlist-import-button");
+  const importStatus = document.querySelector("#playlist-import-status");
   const playlistSearchInput = document.querySelector("#playlist-search");
   const clearSearchButton = document.querySelector("#clear-search-button");
   const sortSelect = document.querySelector("#playlist-sort");
@@ -92,6 +96,29 @@ export function createPlayerView(callbacks) {
   });
   playlistSearchInput.addEventListener("input", (event) => {
     callbacks.onFilterChange(event.currentTarget.value);
+  });
+  importInput.addEventListener("change", async () => {
+    const files = Array.from(importInput.files ?? []);
+
+    if (files.length === 0) {
+      return;
+    }
+
+    importButton.disabled = true;
+    importInput.disabled = true;
+    importStatus.textContent = "Importing local audio files...";
+
+    try {
+      importStatus.textContent = await callbacks.onImportTracks(files);
+    } catch (error) {
+      importStatus.textContent = error instanceof Error
+        ? error.message
+        : "Imported audio files could not be added.";
+    } finally {
+      importInput.value = "";
+      importButton.disabled = false;
+      importInput.disabled = false;
+    }
   });
   clearSearchButton.addEventListener("click", () => {
     playlistSearchInput.value = "";

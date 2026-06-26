@@ -1,6 +1,6 @@
 {
   "name": "music-player-es-modules",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "A modular browser music player built with native ES modules and no bundler.",
   "type": "module",
   "scripts": {

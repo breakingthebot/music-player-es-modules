@@ -25,17 +25,16 @@ See `.env.example` for the canonical placeholder.
 - Run the combined CI-equivalent checks: `npm run test:ci`
 - Create a Vercel preview deployment: `npm run deploy:preview`
 - Create a Vercel production deployment: `npm run deploy:prod`
+- Load local audio files in the app with the `Load MP3 or WAV` control in the playlist panel.
 
 ## Deployed
 Live deployment: `https://music-player-es-modules.vercel.app`
 Latest direct deployment URL: `https://music-player-es-modules-kb9tyc0wq-b-bots-projects-bcdcaeb1.vercel.app`
 
 ## Architecture Notes
-This iteration makes the queue more useful by letting users reorder it without changing the underlying playlist or the persisted playback preferences. The controller now exposes small, explicit queue movement operations that only affect the session queue, and the playback path still consumes the queue from the front before any shuffle or repeat logic runs. That keeps the queue deterministic even as the player gains more playback modes.
+This iteration adds local audio import without replacing the seeded demo playlist or weakening the current playback model. Imported `.mp3` and `.wav` files are normalized through a dedicated import service that creates blob URLs, reads metadata for track duration, and converts the files into the same track shape used everywhere else in the app. That means imported tracks participate in the existing search, sort, queue, favorites, and playback flows instead of creating a second-track system just for local files.
 
-On the UI side, the queue panel now exposes move-up, move-down, and remove controls directly on each queued item, so the user can see and adjust the exact upcoming order without dragging or leaving the main player surface. The browser and controller tests now prove not just that items can be queued, but that a reordered queue is the order playback actually uses.
-
-This deployment-hardening pass keeps that behavior intact while making the repo safer to ship. Vercel now ignores the local-only Node server, test output, editor state, and other non-deploy artifacts, and the package scripts expose a consistent preview and production deployment path from the CLI.
+On the UI side, the playlist panel now includes a focused local-audio import control with a visible status message for importing, skipping unsupported files, or reporting failures. The controller only needed one new capability here: appending tracks into the active playlist at runtime. That keeps the import path modular and testable while preserving the seeded playlist, the queue behavior, and the deployed static app structure.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.
@@ -52,3 +51,4 @@ This deployment-hardening pass keeps that behavior intact while making the repo 
 - Queue reordering is also session-only and changes only the explicit up-next order, not the playlist itself.
 - Deployments are intended to run through the Vercel CLI, with `.vercelignore` and `vercel.json` forcing a static hosting path instead of the local Node server entrypoint.
 - The current live Vercel deployment is available at `music-player-es-modules.vercel.app`.
+- Imported local tracks are session-only because blob URLs are browser-local and are not valid across reloads or devices.
