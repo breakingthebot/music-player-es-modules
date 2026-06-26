@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.17.0] - 2026-06-26
+### Added
+- A more polished visual shell with a redesigned hero, richer panel hierarchy, and upgraded surface styling.
+
+### Changed
+- Refined typography, spacing, controls, and playlist presentation without changing player behavior.
+- Updated README architecture notes for the UI polish pass.
+
 ## [0.16.0] - 2026-06-26
 ### Added
 - Drag-and-drop local audio importing through a dedicated playlist drop zone.

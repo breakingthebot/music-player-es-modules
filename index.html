@@ -10,24 +10,58 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modular Music Player</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <div class="page-noise" aria-hidden="true"></div>
     <main class="app-shell" aria-labelledby="app-title">
       <section class="hero-panel" aria-describedby="app-description">
-        <p class="eyebrow">Native ES Modules</p>
-        <h1 id="app-title">Modular Music Player</h1>
-        <p id="app-description" class="hero-copy">
-          A lightweight browser player with playlist selection, playback controls,
-          and a clean module boundary between state, services, and UI rendering.
-        </p>
+        <div class="hero-copy-column">
+          <p class="eyebrow">Native ES Modules</p>
+          <h1 id="app-title">Modular Music Player</h1>
+          <p id="app-description" class="hero-copy">
+            A polished local-first listening deck with persistent imports, queue controls,
+            and modular browser-native playback.
+          </p>
+          <div class="hero-pill-row" aria-label="Highlights">
+            <span class="hero-pill">Local MP3/WAV import</span>
+            <span class="hero-pill">Persistent browser library</span>
+            <span class="hero-pill">Queue, favorites, recents</span>
+          </div>
+        </div>
+        <div class="hero-spotlight" aria-hidden="true">
+          <div class="hero-orb hero-orb-large"></div>
+          <div class="hero-orb hero-orb-small"></div>
+          <div class="hero-eq-card">
+            <span class="hero-eq-label">Live Session</span>
+            <div class="hero-eq-bars">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <p class="hero-eq-copy">Import, queue, and resume tracks without leaving the browser.</p>
+          </div>
+        </div>
       </section>
 
       <section class="player-panel" aria-label="Music player">
         <div class="status-card">
-          <p class="status-label">Now playing</p>
-          <h2 id="track-title">Loading playlist...</h2>
-          <p id="track-meta">Preparing player</p>
+          <div class="panel-heading">
+            <div>
+              <p class="status-label">Now playing</p>
+              <h2 id="track-title">Loading playlist...</h2>
+              <p id="track-meta">Preparing player</p>
+            </div>
+            <span class="panel-badge">Audio Deck</span>
+          </div>
           <div class="progress-row" aria-label="Playback progress">
             <span id="current-time">0:00</span>
             <input
@@ -54,6 +88,12 @@
         </div>
 
         <div class="controls-card">
+          <div class="panel-heading panel-heading-compact">
+            <div>
+              <p class="status-label">Transport</p>
+              <p class="controls-kicker">Dial in playback, volume, and mode state.</p>
+            </div>
+          </div>
           <div class="controls-row">
             <button id="previous-button" type="button" class="control-button">Previous</button>
             <button id="play-button" type="button" class="control-button control-button-primary">
@@ -95,8 +135,14 @@
 
         <section class="playlist-card" aria-labelledby="playlist-title">
           <div class="playlist-header">
-            <h2 id="playlist-title">Playlist</h2>
-            <p class="playlist-subtitle">Choose a track to start playback.</p>
+            <div class="panel-heading">
+              <div>
+                <p class="status-label">Library</p>
+                <h2 id="playlist-title">Playlist</h2>
+                <p class="playlist-subtitle">Choose a track to start playback or build a local listening stack.</p>
+              </div>
+              <span class="panel-badge panel-badge-soft">Persistent imports</span>
+            </div>
             <div class="playlist-import-row">
               <label class="playlist-search-label" for="playlist-import-input">Add local audio</label>
               <div

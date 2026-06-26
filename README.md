@@ -31,9 +31,9 @@ See `.env.example` for the canonical placeholder.
 Live deployment: `https://music-player-es-modules.vercel.app`
 
 ## Architecture Notes
-This iteration makes the local-audio workflow faster by adding drag-and-drop importing without splitting the feature into a second code path. The playlist panel now has a dedicated drop zone for `.mp3` and `.wav` files, but dropped files still flow through the same import service, IndexedDB persistence layer, and track normalization rules as picker-selected files. That keeps imported tracks consistent no matter how they enter the app.
+This iteration focuses on presentation polish instead of new playback behavior. The app keeps the same modular player logic, but the shell now has a stronger visual hierarchy: a more deliberate hero section, richer card treatments, a clearer transport panel, and a playlist area that feels like a real local library instead of a default form stack. The goal was to make the existing features feel finished without pushing layout logic down into the player services.
 
-On the UI side, the drag state is explicit instead of invisible: the drop zone highlights while files are over it, reuses the existing status messaging, and falls back to the file picker for the same supported formats. The important structural choice here is that the view owns interaction details while `main.js` and the import service continue to own the actual file processing and persistence rules.
+Most of the work lives in the static shell and stylesheet rather than the controller. Typography, spacing, backgrounds, and surface states were tightened so queue controls, recent tracks, import actions, and the main playback state all read as one consistent system. The important structural choice here is that the visual refresh stays mostly in `index.html` and `styles.css`, which preserves the existing module boundaries and keeps the behavior tests stable.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.
