@@ -156,7 +156,7 @@ select {
 }
 
 .hero-meta-row span::before {
-  content: "•";
+  content: "+";
   margin-right: 0.45rem;
   color: var(--border-strong);
 }
