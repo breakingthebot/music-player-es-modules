@@ -1,0 +1,24 @@
+# .vercelignore
+# Excludes local-only files and generated artifacts from Vercel deployments.
+# Connects to: Vercel CLI, .gitignore
+# Created: 2026-06-26
+
+.env
+.env.*
+!.env.example
+venv/
+__pycache__/
+*.pyc
+node_modules/
+.DS_Store
+*.log
+dist/
+build/
+coverage/
+.vercel/
+playwright-report/
+test-results/
+AGENTS.md
+.git/
+.github/
+.vscode/

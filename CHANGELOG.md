@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.12.0] - 2026-06-26
+### Added
+- `.vercelignore` to keep local-only files, test artifacts, editor settings, and `AGENTS.md` out of deployments.
+- Preview and production deployment scripts for the Vercel CLI.
+
+### Changed
+- Updated README deployment guidance and deployment notes for the Vercel preview flow.
+- Bumped the package version for the deployment-hardening iteration.
+
 ## [0.11.0] - 2026-06-26
 ### Added
 - Queue reordering controls so queued tracks can move up or down before playback.
