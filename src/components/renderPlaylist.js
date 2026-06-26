@@ -47,6 +47,7 @@ export function renderPlaylist({
     button.className = `playlist-button${track.id === selectedTrackId ? " playlist-button-active" : ""}`;
     button.dataset.trackId = track.id;
     button.setAttribute("aria-pressed", `${track.id === selectedTrackId}`);
+    button.title = `${track.title} by ${track.artist}`;
     button.addEventListener("click", () => {
       onTrackSelect(track.id);
     });
@@ -69,6 +70,9 @@ export function renderPlaylist({
         ? `${track.title} is already queued`
         : `Play ${track.title} next`
     );
+    queueButton.title = queuedIdSet.has(track.id)
+      ? `${track.title} is already queued`
+      : `Queue ${track.title} to play next`;
     queueButton.textContent = queuedIdSet.has(track.id) ? "Queued" : "Play next";
     queueButton.addEventListener("click", () => {
       onQueueTrack(track.id);
@@ -84,6 +88,9 @@ export function renderPlaylist({
         ? `Remove ${track.title} from favorites`
         : `Add ${track.title} to favorites`
     );
+    favoriteButton.title = favoriteIdSet.has(track.id)
+      ? `Remove ${track.title} from favorites`
+      : `Add ${track.title} to favorites`;
     favoriteButton.textContent = favoriteIdSet.has(track.id) ? "Favorite" : "Fav";
     favoriteButton.addEventListener("click", () => {
       onFavoriteToggle(track.id);
@@ -97,6 +104,7 @@ export function renderPlaylist({
       removeButton.type = "button";
       removeButton.className = "remove-button";
       removeButton.setAttribute("aria-label", `Remove imported track ${track.title}`);
+      removeButton.title = `Remove imported track ${track.title}`;
       removeButton.textContent = "Remove";
       removeButton.addEventListener("click", () => {
         onRemoveImportedTrack(track.id);

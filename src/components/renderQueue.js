@@ -54,6 +54,7 @@ export function renderQueue({
     moveUpButton.type = "button";
     moveUpButton.className = "control-button control-button-secondary queue-action-button";
     moveUpButton.setAttribute("aria-label", `Move ${track.title} up in queue`);
+    moveUpButton.title = `Move ${track.title} earlier in the queue`;
     moveUpButton.textContent = "Move up";
     moveUpButton.disabled = index === 0;
     moveUpButton.addEventListener("click", () => {
@@ -64,6 +65,7 @@ export function renderQueue({
     moveDownButton.type = "button";
     moveDownButton.className = "control-button control-button-secondary queue-action-button";
     moveDownButton.setAttribute("aria-label", `Move ${track.title} down in queue`);
+    moveDownButton.title = `Move ${track.title} later in the queue`;
     moveDownButton.textContent = "Move down";
     moveDownButton.disabled = index === queuedTracks.length - 1;
     moveDownButton.addEventListener("click", () => {
@@ -74,6 +76,7 @@ export function renderQueue({
     removeButton.type = "button";
     removeButton.className = "control-button control-button-secondary queue-action-button queue-remove-button";
     removeButton.setAttribute("aria-label", `Remove ${track.title} from queue`);
+    removeButton.title = `Remove ${track.title} from the queue`;
     removeButton.textContent = "Remove";
     removeButton.addEventListener("click", () => {
       onRemoveQueuedTrack(track.id);

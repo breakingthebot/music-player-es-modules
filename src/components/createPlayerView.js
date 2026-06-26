@@ -72,6 +72,22 @@ export function createPlayerView(callbacks) {
   const playlistEmptyState = document.querySelector("#playlist-empty-state");
   const shortcutHint = document.querySelector("#shortcut-hint");
 
+  playButton.title = "Play or pause the current track";
+  previousButton.title = "Play the previous track";
+  nextButton.title = "Play the next track";
+  shuffleButton.title = "Toggle shuffle playback";
+  repeatButton.title = "Cycle repeat mode";
+  muteButton.title = "Mute or unmute playback";
+  seekSlider.title = "Seek within the current track";
+  volumeSlider.title = "Adjust playback volume";
+  importDropzone.title = "Drop MP3 or WAV files here to import them";
+  importButton.title = "Choose local MP3 or WAV files";
+  playlistSearchInput.title = "Search tracks by title or artist";
+  clearSearchButton.title = "Clear the current track search";
+  sortSelect.title = "Choose how to sort the playlist";
+  allTracksButton.title = "Show the full playlist";
+  favoriteTracksButton.title = "Show only favorite tracks";
+
   /**
    * Enables or disables the local-import controls during async work.
    * @param {boolean} isBusy Whether the import UI should be temporarily disabled.
@@ -259,11 +275,13 @@ export function createPlayerView(callbacks) {
       duration.textContent = formatTime(durationValue);
       playerMessage.textContent = message;
       playButton.textContent = isPlaying ? "Pause" : "Play";
+      playButton.title = isPlaying ? "Pause the current track" : "Play the current track";
       playButton.disabled = !hasTrack;
       previousButton.disabled = !hasTrack;
       nextButton.disabled = !hasTrack;
       muteButton.disabled = !hasTrack;
       muteButton.textContent = isMuted ? "Unmute" : "Mute";
+      muteButton.title = isMuted ? "Unmute playback" : "Mute playback";
       seekSlider.value = `${Math.min(Math.max(progressRatio * SEEK_RANGE_MAX, 0), SEEK_RANGE_MAX)}`;
       seekSlider.disabled = !hasTrack;
       volumeSlider.value = `${Math.round(volume * VOLUME_RANGE_MAX)}`;
@@ -271,6 +289,7 @@ export function createPlayerView(callbacks) {
       playbackModeIndicator.textContent = playbackModeLabel;
       shuffleButton.setAttribute("aria-pressed", `${isShuffleEnabled}`);
       shuffleButton.classList.toggle("filter-toggle-active", isShuffleEnabled);
+      shuffleButton.title = isShuffleEnabled ? "Shuffle is on" : "Shuffle is off";
       repeatButton.setAttribute("aria-pressed", `${repeatMode !== REPEAT_MODES.OFF}`);
       repeatButton.classList.toggle("filter-toggle-active", repeatMode !== REPEAT_MODES.OFF);
       repeatButton.textContent = repeatMode === REPEAT_MODES.ALL
@@ -278,11 +297,17 @@ export function createPlayerView(callbacks) {
         : repeatMode === REPEAT_MODES.ONE
           ? "Repeat: One"
           : "Repeat: Off";
+      repeatButton.title = repeatMode === REPEAT_MODES.ALL
+        ? "Repeat the full playlist"
+        : repeatMode === REPEAT_MODES.ONE
+          ? "Repeat the current track"
+          : "Repeat is off";
       allTracksButton.setAttribute("aria-pressed", `${filterMode === "all"}`);
       favoriteTracksButton.setAttribute("aria-pressed", `${filterMode === "favorites"}`);
       allTracksButton.classList.toggle("filter-toggle-active", filterMode === "all");
       favoriteTracksButton.classList.toggle("filter-toggle-active", filterMode === "favorites");
       favoriteTracksButton.textContent = `Favorites (${favoriteTracks.length})`;
+      favoriteTracksButton.title = `Show favorite tracks (${favoriteTracks.length})`;
       importHelp.textContent = "Or drag and drop MP3 or WAV files here.";
 
       if (playlistSearchInput.value !== filterQuery) {

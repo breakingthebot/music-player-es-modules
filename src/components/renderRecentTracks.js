@@ -26,6 +26,9 @@ export function renderRecentTracks({ container, onTrackSelect, recentTracks }) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "recent-track-button";
+    button.title = track.resumeSeconds > 0
+      ? `Resume ${track.title} at ${formatTime(track.resumeSeconds)}`
+      : `Play ${track.title} from the beginning`;
     button.addEventListener("click", () => {
       onTrackSelect(track.id);
     });

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.19.0] - 2026-06-26
+### Added
+- Hover-title tooltips across core controls, playlist rows, queue actions, and recent tracks.
+
+### Changed
+- Added subtle per-section color accents to separate playback, transport, and library areas.
+- Updated README architecture notes for the section-color and tooltip pass.
+
 ## [0.18.0] - 2026-06-26
 ### Changed
 - Simplified the interface into a sleeker, more minimal visual system with smaller typography and quieter surfaces.
