@@ -28,14 +28,14 @@ See `.env.example` for the canonical placeholder.
 
 ## Deployed
 Live deployment: `https://music-player-es-modules.vercel.app`
-Latest direct deployment URL: `https://music-player-es-modules-2v3o3fwiu-b-bots-projects-bcdcaeb1.vercel.app`
+Latest direct deployment URL: `https://music-player-es-modules-kb9tyc0wq-b-bots-projects-bcdcaeb1.vercel.app`
 
 ## Architecture Notes
 This iteration makes the queue more useful by letting users reorder it without changing the underlying playlist or the persisted playback preferences. The controller now exposes small, explicit queue movement operations that only affect the session queue, and the playback path still consumes the queue from the front before any shuffle or repeat logic runs. That keeps the queue deterministic even as the player gains more playback modes.
 
 On the UI side, the queue panel now exposes move-up, move-down, and remove controls directly on each queued item, so the user can see and adjust the exact upcoming order without dragging or leaving the main player surface. The browser and controller tests now prove not just that items can be queued, but that a reordered queue is the order playback actually uses.
 
-This deployment-hardening pass keeps that behavior intact while making the repo safer to ship. Vercel now ignores local-only instructions, test output, editor state, and other non-deploy artifacts, and the package scripts expose a consistent preview and production deployment path from the CLI.
+This deployment-hardening pass keeps that behavior intact while making the repo safer to ship. Vercel now ignores the local-only Node server, test output, editor state, and other non-deploy artifacts, and the package scripts expose a consistent preview and production deployment path from the CLI.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.
@@ -50,5 +50,5 @@ This deployment-hardening pass keeps that behavior intact while making the repo 
 - The up-next queue is intentionally session-only in this iteration so queue interactions stay simple while playback order rules are being established.
 - Shuffle and repeat preferences are persisted locally, while queue order remains session-only and higher priority than playback-mode rules.
 - Queue reordering is also session-only and changes only the explicit up-next order, not the playlist itself.
-- Deployments are intended to run through the Vercel CLI, with `.vercelignore` mirroring the local-only exclusions needed for a clean hosted build.
+- Deployments are intended to run through the Vercel CLI, with `.vercelignore` and `vercel.json` forcing a static hosting path instead of the local Node server entrypoint.
 - The current live Vercel deployment is available at `music-player-es-modules.vercel.app`.

@@ -22,3 +22,7 @@ AGENTS.md
 .git/
 .github/
 .vscode/
+server.js
+scripts/
+tests/
+playwright.config.js

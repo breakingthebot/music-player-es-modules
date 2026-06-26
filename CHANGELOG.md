@@ -9,6 +9,8 @@
 - Updated README deployment guidance and deployment notes for the Vercel preview flow.
 - Bumped the package version for the deployment-hardening iteration.
 - Published the app on Vercel and documented the live deployment URL.
+- Corrected the Vercel deployment path so the project is served as a static site instead of the local Node server.
+- Updated the documented direct deployment URL after the static hosting fix.
 
 ## [0.11.0] - 2026-06-26
 ### Added
