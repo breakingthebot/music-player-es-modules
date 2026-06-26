@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.0] - 2026-06-26
+### Added
+- Drag-and-drop local audio importing through a dedicated playlist drop zone.
+- Browser coverage for dropped-file importing alongside the existing picker-based import flow.
+
+### Changed
+- Unified file-picker and drag-and-drop imports onto one shared UI import path.
+- Updated README architecture notes for the drag-and-drop import experience.
+
 ## [0.15.0] - 2026-06-26
 ### Added
 - Imported-track removal controls directly in playlist rows for locally added audio.

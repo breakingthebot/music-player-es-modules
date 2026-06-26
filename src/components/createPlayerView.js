@@ -60,8 +60,10 @@ export function createPlayerView(callbacks) {
   const playbackModeIndicator = document.querySelector("#playback-mode-indicator");
   const allTracksButton = document.querySelector("#all-tracks-button");
   const favoriteTracksButton = document.querySelector("#favorite-tracks-button");
+  const importDropzone = document.querySelector("#playlist-import-dropzone");
   const importInput = document.querySelector("#playlist-import-input");
   const importButton = document.querySelector("#playlist-import-button");
+  const importHelp = document.querySelector("#playlist-import-help");
   const importStatus = document.querySelector("#playlist-import-status");
   const playlistSearchInput = document.querySelector("#playlist-search");
   const clearSearchButton = document.querySelector("#clear-search-button");
@@ -69,6 +71,57 @@ export function createPlayerView(callbacks) {
   const playlist = document.querySelector("#playlist");
   const playlistEmptyState = document.querySelector("#playlist-empty-state");
   const shortcutHint = document.querySelector("#shortcut-hint");
+
+  /**
+   * Enables or disables the local-import controls during async work.
+   * @param {boolean} isBusy Whether the import UI should be temporarily disabled.
+   * @returns {void}
+   */
+  function setImportBusyState(isBusy) {
+    importButton.disabled = isBusy;
+    importInput.disabled = isBusy;
+    importDropzone.classList.toggle("playlist-import-dropzone-busy", isBusy);
+  }
+
+  /**
+   * Updates the drop zone emphasis while a file drag is active.
+   * @param {boolean} isActive Whether the drop zone is currently active.
+   * @returns {void}
+   */
+  function setImportDropzoneActive(isActive) {
+    if (importInput.disabled) {
+      return;
+    }
+
+    importDropzone.classList.toggle("playlist-import-dropzone-active", isActive);
+  }
+
+  /**
+   * Runs the shared import flow for picker-selected or dropped files.
+   * @param {File[]} files The local files to import.
+   * @param {string} loadingMessage The status message to show while importing.
+   * @returns {Promise<void>}
+   */
+  async function importLocalFiles(files, loadingMessage) {
+    if (files.length === 0) {
+      return;
+    }
+
+    setImportBusyState(true);
+    setImportDropzoneActive(false);
+    importStatus.textContent = loadingMessage;
+
+    try {
+      importStatus.textContent = await callbacks.onImportTracks(files);
+    } catch (error) {
+      importStatus.textContent = error instanceof Error
+        ? error.message
+        : "Imported audio files could not be added.";
+    } finally {
+      importInput.value = "";
+      setImportBusyState(false);
+    }
+  }
 
   previousButton.addEventListener("click", callbacks.onPrevious);
   nextButton.addEventListener("click", callbacks.onNext);
@@ -101,25 +154,26 @@ export function createPlayerView(callbacks) {
   importInput.addEventListener("change", async () => {
     const files = Array.from(importInput.files ?? []);
 
-    if (files.length === 0) {
-      return;
+    await importLocalFiles(files, "Importing local audio files...");
+  });
+  importDropzone.addEventListener("dragenter", (event) => {
+    event.preventDefault();
+    setImportDropzoneActive(true);
+  });
+  importDropzone.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    setImportDropzoneActive(true);
+  });
+  importDropzone.addEventListener("dragleave", (event) => {
+    if (!importDropzone.contains(event.relatedTarget)) {
+      setImportDropzoneActive(false);
     }
-
-    importButton.disabled = true;
-    importInput.disabled = true;
-    importStatus.textContent = "Importing local audio files...";
-
-    try {
-      importStatus.textContent = await callbacks.onImportTracks(files);
-    } catch (error) {
-      importStatus.textContent = error instanceof Error
-        ? error.message
-        : "Imported audio files could not be added.";
-    } finally {
-      importInput.value = "";
-      importButton.disabled = false;
-      importInput.disabled = false;
-    }
+  });
+  importDropzone.addEventListener("drop", async (event) => {
+    event.preventDefault();
+    setImportDropzoneActive(false);
+    await importLocalFiles(Array.from(event.dataTransfer?.files ?? []), "Importing dropped audio files...");
   });
   clearSearchButton.addEventListener("click", () => {
     playlistSearchInput.value = "";
@@ -229,6 +283,7 @@ export function createPlayerView(callbacks) {
       allTracksButton.classList.toggle("filter-toggle-active", filterMode === "all");
       favoriteTracksButton.classList.toggle("filter-toggle-active", filterMode === "favorites");
       favoriteTracksButton.textContent = `Favorites (${favoriteTracks.length})`;
+      importHelp.textContent = "Or drag and drop MP3 or WAV files here.";
 
       if (playlistSearchInput.value !== filterQuery) {
         playlistSearchInput.value = filterQuery;

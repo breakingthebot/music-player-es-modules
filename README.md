@@ -31,9 +31,9 @@ See `.env.example` for the canonical placeholder.
 Live deployment: `https://music-player-es-modules.vercel.app`
 
 ## Architecture Notes
-This iteration rounds out the local-audio workflow by letting users remove imported tracks cleanly after they have been saved in the browser. Imported `.mp3` and `.wav` files still move through a dedicated import service and an IndexedDB-backed imported-track store, but now each imported item carries explicit metadata that marks it as local. That gives the playlist UI and controller a reliable way to offer removal only where it makes sense and to keep the seeded demo tracks separate from user-managed files.
+This iteration makes the local-audio workflow faster by adding drag-and-drop importing without splitting the feature into a second code path. The playlist panel now has a dedicated drop zone for `.mp3` and `.wav` files, but dropped files still flow through the same import service, IndexedDB persistence layer, and track normalization rules as picker-selected files. That keeps imported tracks consistent no matter how they enter the app.
 
-On the behavior side, removing an imported track now deletes the IndexedDB record, revokes its blob URL, drops it from favorites, queue, recents, and saved progress, and reconciles the current playback selection if that track was active. That keeps local-file management modular and predictable instead of leaving behind dead playlist rows or orphaned browser storage.
+On the UI side, the drag state is explicit instead of invisible: the drop zone highlights while files are over it, reuses the existing status messaging, and falls back to the file picker for the same supported formats. The important structural choice here is that the view owns interaction details while `main.js` and the import service continue to own the actual file processing and persistence rules.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.
@@ -50,4 +50,4 @@ On the behavior side, removing an imported track now deletes the IndexedDB recor
 - Queue reordering is also session-only and changes only the explicit up-next order, not the playlist itself.
 - Deployments are intended to run through the Vercel CLI, with `.vercelignore` and `vercel.json` forcing a static hosting path instead of the local Node server entrypoint.
 - The current live Vercel deployment is available at `music-player-es-modules.vercel.app`.
-- Imported local tracks are persisted in IndexedDB for the current browser, can now be removed individually from the playlist, and still do not sync across devices or browsers.
+- Imported local tracks are persisted in IndexedDB for the current browser, can be added either by file picker or drag and drop, can be removed individually from the playlist, and still do not sync across devices or browsers.

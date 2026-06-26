@@ -99,7 +99,11 @@
             <p class="playlist-subtitle">Choose a track to start playback.</p>
             <div class="playlist-import-row">
               <label class="playlist-search-label" for="playlist-import-input">Add local audio</label>
-              <div class="playlist-import-actions">
+              <div
+                id="playlist-import-dropzone"
+                class="playlist-import-dropzone"
+                aria-describedby="playlist-import-help playlist-import-status"
+              >
                 <input
                   id="playlist-import-input"
                   class="playlist-import-input"
@@ -107,9 +111,14 @@
                   accept=".mp3,.wav,audio/mpeg,audio/wav"
                   multiple
                 />
-                <label id="playlist-import-button" class="control-button control-button-secondary playlist-import-button" for="playlist-import-input">
-                  Load MP3 or WAV
-                </label>
+                <div class="playlist-import-actions">
+                  <label id="playlist-import-button" class="control-button control-button-secondary playlist-import-button" for="playlist-import-input">
+                    Load MP3 or WAV
+                  </label>
+                  <p id="playlist-import-help" class="playlist-import-help">
+                    Or drag and drop MP3 or WAV files here.
+                  </p>
+                </div>
               </div>
               <p id="playlist-import-status" class="playlist-import-status" role="status" aria-live="polite"></p>
             </div>

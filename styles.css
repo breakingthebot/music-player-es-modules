@@ -317,6 +317,27 @@ input {
   align-items: center;
 }
 
+.playlist-import-dropzone {
+  border: 1px dashed rgba(193, 92, 45, 0.35);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 250, 242, 0.95), rgba(246, 235, 223, 0.8));
+  padding: 0.95rem 1rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.playlist-import-dropzone-active {
+  border-color: var(--accent);
+  box-shadow: 0 14px 28px rgba(83, 47, 18, 0.12);
+  background: linear-gradient(135deg, rgba(255, 247, 237, 1), rgba(248, 227, 209, 0.95));
+}
+
+.playlist-import-dropzone-busy {
+  opacity: 0.7;
+}
+
 .playlist-import-input {
   position: absolute;
   width: 1px;
@@ -333,6 +354,12 @@ input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.playlist-import-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .playlist-import-status {

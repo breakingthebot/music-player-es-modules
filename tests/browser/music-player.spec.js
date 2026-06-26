@@ -65,6 +65,36 @@ async function installFakeAudio(page) {
   });
 }
 
+/**
+ * Dispatches a synthetic drag-and-drop import with a real browser DataTransfer object.
+ * @param {import("@playwright/test").Page} page The Playwright page instance.
+ * @param {{ mimeType: string, name: string, text: string }} fileDefinition The dropped file definition.
+ * @returns {Promise<void>}
+ */
+async function dispatchImportedFileDrop(page, fileDefinition) {
+  await page.evaluate(({ mimeType, name, text }) => {
+    const dropzone = document.querySelector("#playlist-import-dropzone");
+
+    if (!(dropzone instanceof HTMLElement)) {
+      throw new Error("Import drop zone was not found.");
+    }
+
+    const dataTransfer = new DataTransfer();
+    const file = new File([text], name, { type: mimeType });
+    dataTransfer.items.add(file);
+    dropzone.dispatchEvent(new DragEvent("dragenter", {
+      bubbles: true,
+      cancelable: true,
+      dataTransfer
+    }));
+    dropzone.dispatchEvent(new DragEvent("drop", {
+      bubbles: true,
+      cancelable: true,
+      dataTransfer
+    }));
+  }, fileDefinition);
+}
+
 test("music player supports playback controls, queueing, playback modes, search, favorites, and recents", async ({ page }) => {
   await installFakeAudio(page);
   await page.goto("/");
@@ -151,4 +181,33 @@ test("music player supports playback controls, queueing, playback modes, search,
 
   await page.reload();
   await expect(playlistButtons.filter({ hasText: "Local Demo" })).toHaveCount(0);
+});
+
+test("music player imports audio files from drag and drop", async ({ page }) => {
+  await installFakeAudio(page);
+  await page.goto("/");
+
+  await page.evaluate(() => {
+    const dropzone = document.querySelector("#playlist-import-dropzone");
+
+    if (!(dropzone instanceof HTMLElement)) {
+      throw new Error("Import drop zone was not found.");
+    }
+
+    dropzone.dispatchEvent(new DragEvent("dragenter", {
+      bubbles: true,
+      cancelable: true,
+      dataTransfer: new DataTransfer()
+    }));
+  });
+  await expect(page.locator("#playlist-import-dropzone")).toHaveClass(/playlist-import-dropzone-active/);
+
+  await dispatchImportedFileDrop(page, {
+    mimeType: "audio/wav",
+    name: "Dropped Demo.wav",
+    text: "fake-wave-audio"
+  });
+  await expect(page.locator("#playlist-import-status")).toContainText("Imported 1 track");
+  await expect(page.locator(".playlist-button").filter({ hasText: "Dropped Demo" })).toBeVisible();
+  await expect(page.locator("#playlist-import-dropzone")).not.toHaveClass(/playlist-import-dropzone-active/);
 });
