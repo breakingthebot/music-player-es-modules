@@ -86,9 +86,14 @@ test("music player supports playback controls, queueing, playback modes, search,
   await expect(page.locator("#queue-section")).toBeHidden();
 
   await page.getByRole("button", { name: "Play Night Fall next" }).click();
+  await page.getByRole("button", { name: "Play City Lights next" }).click();
+  await expect(page.locator("#queue-list")).toContainText("Night Fall");
+  await expect(page.locator("#queue-list")).toContainText("City Lights");
+  await page.getByRole("button", { name: "Move City Lights up in queue" }).click();
+  await expect(page.locator(".queue-item").first()).toContainText("City Lights");
   await page.locator("#next-button").click();
-  await expect(page.locator("#track-title")).toHaveText("Night Fall");
-  await expect(page.locator("#queue-section")).toBeHidden();
+  await expect(page.locator("#track-title")).toHaveText("City Lights");
+  await expect(page.locator("#queue-list")).toContainText("Night Fall");
 
   await page.locator("#shuffle-button").click();
   await expect(page.locator("#shuffle-button")).toHaveAttribute("aria-pressed", "true");

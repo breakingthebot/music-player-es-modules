@@ -399,6 +399,29 @@ test("controller queues tracks and consumes the queue before shuffle and repeat 
   assert.deepEqual(states.at(-1).queuedTracks, []);
 });
 
+test("controller reorders queued tracks and uses the updated queue order", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.queueTrack("two");
+  controller.queueTrack("three");
+  controller.moveQueuedTrackUp("three");
+
+  assert.deepEqual(states.at(-1).queuedTracks.map((track) => track.id), ["three", "two"]);
+
+  controller.next();
+
+  assert.equal(states.at(-1).selectedTrack.id, "three");
+  assert.deepEqual(states.at(-1).queuedTracks.map((track) => track.id), ["two"]);
+});
+
 test("controller uses shuffle mode when advancing manually", () => {
   const audioAdapter = createFakeAudioAdapter();
   const states = [];

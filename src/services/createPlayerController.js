@@ -64,6 +64,8 @@ import { sortTracks } from "./sortTracks.js";
  *   bootstrap: () => void,
  *   cycleRepeatMode: () => void,
  *   getState: () => object,
+ *   moveQueuedTrackDown: (trackId: string) => void,
+ *   moveQueuedTrackUp: (trackId: string) => void,
  *   next: () => void,
  *   playSelectedTrack: (trackId: string) => Promise<void>,
  *   previous: () => void,
@@ -192,6 +194,32 @@ export function createPlayerController({
     return queuedTrackIds
       .map((trackId) => tracks.find((track) => track.id === trackId) ?? null)
       .filter(Boolean);
+  }
+
+  /**
+   * Moves a queued track by one position when the new position is valid.
+   * @param {string} trackId The queued track identifier.
+   * @param {-1 | 1} direction The queue movement direction.
+   * @returns {void}
+   */
+  function moveQueuedTrack(trackId, direction) {
+    const currentIndex = queuedTrackIds.findIndex((currentTrackId) => currentTrackId === trackId);
+
+    if (currentIndex < 0) {
+      return;
+    }
+
+    const nextIndex = currentIndex + direction;
+
+    if (nextIndex < 0 || nextIndex >= queuedTrackIds.length) {
+      return;
+    }
+
+    const nextQueuedTrackIds = [...queuedTrackIds];
+    const [movedTrackId] = nextQueuedTrackIds.splice(currentIndex, 1);
+    nextQueuedTrackIds.splice(nextIndex, 0, movedTrackId);
+    queuedTrackIds = nextQueuedTrackIds;
+    notify();
   }
 
   /**
@@ -557,6 +585,24 @@ export function createPlayerController({
      */
     getState() {
       return buildState();
+    },
+
+    /**
+     * Moves a queued track one position later in the queue.
+     * @param {string} trackId The queued track identifier.
+     * @returns {void}
+     */
+    moveQueuedTrackDown(trackId) {
+      moveQueuedTrack(trackId, 1);
+    },
+
+    /**
+     * Moves a queued track one position earlier in the queue.
+     * @param {string} trackId The queued track identifier.
+     * @returns {void}
+     */
+    moveQueuedTrackUp(trackId) {
+      moveQueuedTrack(trackId, -1);
     },
 
     /**

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.0] - 2026-06-26
+### Added
+- Queue reordering controls so queued tracks can move up or down before playback.
+- Controller and browser coverage for reordered queue playback order.
+
+### Changed
+- Updated the queue panel layout to support move-up, move-down, and remove actions together.
+- Updated README architecture notes for the reordered queue flow.
+
 ## [0.10.0] - 2026-06-26
 ### Added
 - Shuffle and repeat playback controls with visible state indicators in the control panel.

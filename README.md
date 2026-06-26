@@ -28,9 +28,9 @@ See `.env.example` for the canonical placeholder.
 Not deployed in this iteration.
 
 ## Architecture Notes
-This iteration adds explicit playback modes without letting them fight the queue or the rest of the player state. The controller now persists shuffle and repeat preferences alongside the selected track, volume, sort mode, favorites, recents, and resume data. Queue items still win first, then the controller applies the playback mode rules: shuffle picks a non-current random track when possible, repeat one replays the current track on natural track end, and repeat all wraps the playlist when the end is reached.
+This iteration makes the queue more useful by letting users reorder it without changing the underlying playlist or the persisted playback preferences. The controller now exposes small, explicit queue movement operations that only affect the session queue, and the playback path still consumes the queue from the front before any shuffle or repeat logic runs. That keeps the queue deterministic even as the player gains more playback modes.
 
-On the UI side, shuffle and repeat live in the controls card as first-class playback settings with a plain-English status indicator, so the user can see the current mode without guessing from behavior alone. That keeps the feature visible and makes the persisted state easy to verify in both the browser tests and the controller tests.
+On the UI side, the queue panel now exposes move-up, move-down, and remove controls directly on each queued item, so the user can see and adjust the exact upcoming order without dragging or leaving the main player surface. The browser and controller tests now prove not just that items can be queued, but that a reordered queue is the order playback actually uses.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.
@@ -44,3 +44,4 @@ On the UI side, shuffle and repeat live in the controls card as first-class play
 - Playlist sort mode is persisted locally and keyboard navigation now supports Arrow, Home, and End movement across playlist and recent rows.
 - The up-next queue is intentionally session-only in this iteration so queue interactions stay simple while playback order rules are being established.
 - Shuffle and repeat preferences are persisted locally, while queue order remains session-only and higher priority than playback-mode rules.
+- Queue reordering is also session-only and changes only the explicit up-next order, not the playlist itself.

@@ -18,6 +18,8 @@ import { formatTime } from "../utils/formatTime.js";
  *   onCycleRepeatMode: () => void,
  *   onFilterChange: (value: string) => void,
  *   onFilterModeChange: (value: string) => void,
+ *   onMoveQueuedTrackDown: (trackId: string) => void,
+ *   onMoveQueuedTrackUp: (trackId: string) => void,
  *   onNext: () => void,
  *   onPrevious: () => void,
  *   onQueueTrack: (trackId: string) => void,
@@ -115,7 +117,7 @@ export function createPlayerView(callbacks) {
 
   attachListKeyboardNavigation(playlist, ".playlist-button");
   attachListKeyboardNavigation(recentTracksList, ".recent-track-button");
-  attachListKeyboardNavigation(queueList, ".queue-remove-button");
+  attachListKeyboardNavigation(queueList, ".queue-action-button");
 
   return {
     /**
@@ -230,6 +232,12 @@ export function createPlayerView(callbacks) {
 
       renderQueue({
         container: queueList,
+        onMoveQueuedTrackDown: (trackId) => {
+          callbacks.onMoveQueuedTrackDown(trackId);
+        },
+        onMoveQueuedTrackUp: (trackId) => {
+          callbacks.onMoveQueuedTrackUp(trackId);
+        },
         onRemoveQueuedTrack: (trackId) => {
           callbacks.onRemoveQueuedTrack(trackId);
         },

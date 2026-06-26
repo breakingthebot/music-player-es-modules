@@ -456,6 +456,12 @@ input {
   gap: 0.2rem;
 }
 
+.queue-actions {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 0.5rem;
+}
+
 .queue-position {
   font-size: 0.75rem;
   font-weight: 700;
@@ -472,6 +478,10 @@ input {
 .queue-track-meta {
   display: block;
   color: var(--muted);
+}
+
+.queue-action-button {
+  white-space: nowrap;
 }
 
 .playlist-track-title {
@@ -529,6 +539,7 @@ input {
   }
 
   .playlist-actions,
+  .queue-actions,
   .queue-row {
     grid-template-columns: 1fr;
   }
