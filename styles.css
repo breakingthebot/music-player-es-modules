@@ -217,6 +217,14 @@ input {
   flex-wrap: wrap;
 }
 
+.playback-mode-row {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
 .volume-row {
   display: grid;
   grid-template-columns: auto auto 1fr;
@@ -226,7 +234,8 @@ input {
 }
 
 .volume-label,
-.shortcut-hint {
+.shortcut-hint,
+.playback-mode-indicator {
   color: var(--muted);
 }
 
@@ -477,6 +486,11 @@ input {
 }
 
 .shortcut-hint {
+  margin: 0.85rem 0 0;
+  font-size: 0.9rem;
+}
+
+.playback-mode-indicator {
   margin: 0.85rem 0 0;
   font-size: 0.9rem;
 }

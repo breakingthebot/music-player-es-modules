@@ -5,7 +5,7 @@
  * Created: 2026-06-25
  */
 
-import { DEFAULT_VOLUME, SORT_MODES, STORAGE_KEY } from "../config/appConfig.js";
+import { DEFAULT_VOLUME, REPEAT_MODES, SORT_MODES, STORAGE_KEY } from "../config/appConfig.js";
 import { clampNumber } from "../utils/clampNumber.js";
 import { logger } from "../utils/logger.js";
 
@@ -13,20 +13,22 @@ import { logger } from "../utils/logger.js";
  * Creates a small preference store around Web Storage.
  * @param {Storage} storage The browser storage implementation to use.
  * @returns {{
- *   load: () => { favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, sortMode: string, trackProgressSeconds: Record<string, number>, volume: number },
- *   save: (preferences: { favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, sortMode: string, trackProgressSeconds: Record<string, number>, volume: number }) => void
+ *   load: () => { favoriteTrackIds: string[], isMuted: boolean, isShuffleEnabled: boolean, recentTrackIds: string[], repeatMode: string, selectedTrackId: string | null, sortMode: string, trackProgressSeconds: Record<string, number>, volume: number },
+ *   save: (preferences: { favoriteTrackIds: string[], isMuted: boolean, isShuffleEnabled: boolean, recentTrackIds: string[], repeatMode: string, selectedTrackId: string | null, sortMode: string, trackProgressSeconds: Record<string, number>, volume: number }) => void
  * }}
  */
 export function createPreferencesStore(storage) {
   /**
    * Returns the default preference set.
-   * @returns {{ favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, sortMode: string, trackProgressSeconds: Record<string, number>, volume: number }}
+   * @returns {{ favoriteTrackIds: string[], isMuted: boolean, isShuffleEnabled: boolean, recentTrackIds: string[], repeatMode: string, selectedTrackId: string | null, sortMode: string, trackProgressSeconds: Record<string, number>, volume: number }}
    */
   function getDefaults() {
     return {
       favoriteTrackIds: [],
       isMuted: false,
+      isShuffleEnabled: false,
       recentTrackIds: [],
+      repeatMode: REPEAT_MODES.OFF,
       selectedTrackId: null,
       sortMode: SORT_MODES.DEFAULT,
       trackProgressSeconds: {},
@@ -37,7 +39,7 @@ export function createPreferencesStore(storage) {
   return {
     /**
      * Loads persisted preferences or returns safe defaults.
-     * @returns {{ favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, sortMode: string, trackProgressSeconds: Record<string, number>, volume: number }}
+     * @returns {{ favoriteTrackIds: string[], isMuted: boolean, isShuffleEnabled: boolean, recentTrackIds: string[], repeatMode: string, selectedTrackId: string | null, sortMode: string, trackProgressSeconds: Record<string, number>, volume: number }}
      */
     load() {
       const defaults = getDefaults();
@@ -60,9 +62,13 @@ export function createPreferencesStore(storage) {
             ? parsedValue.favoriteTrackIds.filter((trackId) => typeof trackId === "string")
             : [],
           isMuted: Boolean(parsedValue.isMuted),
+          isShuffleEnabled: Boolean(parsedValue.isShuffleEnabled),
           recentTrackIds: Array.isArray(parsedValue.recentTrackIds)
             ? parsedValue.recentTrackIds.filter((trackId) => typeof trackId === "string")
             : [],
+          repeatMode: Object.values(REPEAT_MODES).includes(parsedValue.repeatMode)
+            ? parsedValue.repeatMode
+            : REPEAT_MODES.OFF,
           selectedTrackId: typeof parsedValue.selectedTrackId === "string"
             ? parsedValue.selectedTrackId
             : null,
@@ -89,7 +95,7 @@ export function createPreferencesStore(storage) {
 
     /**
      * Persists the latest player preferences for the next visit.
-     * @param {{ favoriteTrackIds: string[], isMuted: boolean, recentTrackIds: string[], selectedTrackId: string | null, sortMode: string, trackProgressSeconds: Record<string, number>, volume: number }} preferences The preferences to store.
+     * @param {{ favoriteTrackIds: string[], isMuted: boolean, isShuffleEnabled: boolean, recentTrackIds: string[], repeatMode: string, selectedTrackId: string | null, sortMode: string, trackProgressSeconds: Record<string, number>, volume: number }} preferences The preferences to store.
      * @returns {void}
      */
     save(preferences) {
@@ -103,9 +109,13 @@ export function createPreferencesStore(storage) {
             ? preferences.favoriteTrackIds.filter((trackId) => typeof trackId === "string")
             : [],
           isMuted: Boolean(preferences.isMuted),
+          isShuffleEnabled: Boolean(preferences.isShuffleEnabled),
           recentTrackIds: Array.isArray(preferences.recentTrackIds)
             ? preferences.recentTrackIds.filter((trackId) => typeof trackId === "string")
             : [],
+          repeatMode: Object.values(REPEAT_MODES).includes(preferences.repeatMode)
+            ? preferences.repeatMode
+            : REPEAT_MODES.OFF,
           selectedTrackId: typeof preferences.selectedTrackId === "string"
             ? preferences.selectedTrackId
             : null,

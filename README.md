@@ -28,9 +28,9 @@ See `.env.example` for the canonical placeholder.
 Not deployed in this iteration.
 
 ## Architecture Notes
-This iteration adds an explicit up-next queue without turning the player into a monolith. The controller now owns a lightweight queue state alongside the existing selected track, favorites, recents, search filters, sort mode, and resume data, while playback order stays predictable: queued tracks are consumed first, then the normal playlist order resumes. That keeps queue behavior easy to reason about and test because it is isolated from playlist rendering and from persistent preferences.
+This iteration adds explicit playback modes without letting them fight the queue or the rest of the player state. The controller now persists shuffle and repeat preferences alongside the selected track, volume, sort mode, favorites, recents, and resume data. Queue items still win first, then the controller applies the playback mode rules: shuffle picks a non-current random track when possible, repeat one replays the current track on natural track end, and repeat all wraps the playlist when the end is reached.
 
-On the UI side, the playlist now exposes a dedicated `Play next` action per row and a separate queue panel shows what will play next and lets users remove items before they are consumed. Splitting that queue panel into its own renderer keeps the view layer modular and makes the new feature feel visible instead of hidden behind controller state.
+On the UI side, shuffle and repeat live in the controls card as first-class playback settings with a plain-English status indicator, so the user can see the current mode without guessing from behavior alone. That keeps the feature visible and makes the persisted state easy to verify in both the browser tests and the controller tests.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.
@@ -43,3 +43,4 @@ On the UI side, the playlist now exposes a dedicated `Play next` action per row 
 - GitHub Actions runs both unit tests and a Playwright browser interaction test on pushes and pull requests.
 - Playlist sort mode is persisted locally and keyboard navigation now supports Arrow, Home, and End movement across playlist and recent rows.
 - The up-next queue is intentionally session-only in this iteration so queue interactions stay simple while playback order rules are being established.
+- Shuffle and repeat preferences are persisted locally, while queue order remains session-only and higher priority than playback-mode rules.

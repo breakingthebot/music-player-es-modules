@@ -1,6 +1,6 @@
 /**
  * tests/services/createPlayerController.test.js
- * Verifies playlist transitions, queue behavior, and playback state updates.
+ * Verifies playlist transitions, queue behavior, playback modes, and playback state updates.
  * Connects to: src/services/createPlayerController.js
  * Created: 2026-06-25
  */
@@ -167,6 +167,8 @@ test("controller applies and persists saved preferences", () => {
     audioAdapter,
     initialPreferences: {
       isMuted: true,
+      isShuffleEnabled: true,
+      repeatMode: "one",
       selectedTrackId: "two",
       volume: 0.35
     },
@@ -182,10 +184,14 @@ test("controller applies and persists saved preferences", () => {
   assert.equal(audioAdapter.getMuted(), true);
   assert.equal(audioAdapter.getVolume(), 0.35);
   assert.equal(states.at(-1).selectedTrack.id, "two");
+  assert.equal(states.at(-1).isShuffleEnabled, true);
+  assert.equal(states.at(-1).repeatMode, "one");
   assert.deepEqual(savedPreferences.at(-1), {
     favoriteTrackIds: [],
     isMuted: true,
+    isShuffleEnabled: true,
     recentTrackIds: ["two"],
+    repeatMode: "one",
     selectedTrackId: "two",
     sortMode: "default",
     trackProgressSeconds: {},
@@ -347,7 +353,93 @@ test("controller sorts filtered tracks and persists the selected sort mode", () 
   assert.equal(savedPreferences.at(-1).sortMode, "title-asc");
 });
 
-test("controller queues tracks and consumes the queue before the normal playlist order", async () => {
+test("controller toggles shuffle and cycles repeat modes with persistence", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const savedPreferences = [];
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onPreferencesChange: (preferences) => savedPreferences.push(preferences),
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.toggleShuffle();
+  controller.cycleRepeatMode();
+  controller.cycleRepeatMode();
+
+  assert.equal(states.at(-1).isShuffleEnabled, true);
+  assert.equal(states.at(-1).repeatMode, "one");
+  assert.equal(savedPreferences.at(-1).isShuffleEnabled, true);
+  assert.equal(savedPreferences.at(-1).repeatMode, "one");
+});
+
+test("controller queues tracks and consumes the queue before shuffle and repeat rules", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    initialPreferences: {
+      isShuffleEnabled: true,
+      repeatMode: "one"
+    },
+    messages,
+    onStateChange: (state) => states.push(state),
+    randomNumber: () => 0.95,
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.queueTrack("three");
+  controller.next();
+
+  assert.equal(states.at(-1).selectedTrack.id, "three");
+  assert.deepEqual(states.at(-1).queuedTracks, []);
+});
+
+test("controller uses shuffle mode when advancing manually", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    initialPreferences: {
+      isShuffleEnabled: true
+    },
+    messages,
+    onStateChange: (state) => states.push(state),
+    randomNumber: () => 0.99,
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.next();
+
+  assert.equal(states.at(-1).selectedTrack.id, "three");
+});
+
+test("controller repeats the current track when repeat-one is active on track end", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    initialPreferences: {
+      repeatMode: "one"
+    },
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.playSelectedTrack("two");
+  audioAdapter.trigger("ended");
+
+  assert.equal(states.at(-1).selectedTrack.id, "two");
+});
+
+test("controller stops at the end of the playlist when repeat is off", async () => {
   const audioAdapter = createFakeAudioAdapter();
   const states = [];
   const controller = createPlayerController({
@@ -358,18 +450,32 @@ test("controller queues tracks and consumes the queue before the normal playlist
   });
 
   controller.bootstrap();
-  controller.queueTrack("three");
-  controller.queueTrack("two");
-  controller.next();
+  await controller.playSelectedTrack("three");
+  audioAdapter.trigger("ended");
 
   assert.equal(states.at(-1).selectedTrack.id, "three");
-  assert.deepEqual(states.at(-1).queuedTracks.map((track) => track.id), ["two"]);
+  assert.equal(states.at(-1).isPlaying, false);
+  assert.equal(states.at(-1).message, "Ready.");
+});
 
+test("controller repeats the playlist from the start when repeat-all is active", async () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    initialPreferences: {
+      repeatMode: "all"
+    },
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
   await controller.playSelectedTrack("three");
-  controller.next();
+  audioAdapter.trigger("ended");
 
-  assert.equal(states.at(-1).selectedTrack.id, "two");
-  assert.deepEqual(states.at(-1).queuedTracks.map((track) => track.id), []);
+  assert.equal(states.at(-1).selectedTrack.id, "one");
 });
 
 test("controller removes queued tracks from the up-next panel", () => {

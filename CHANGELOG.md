@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.10.0] - 2026-06-26
+### Added
+- Shuffle and repeat playback controls with visible state indicators in the control panel.
+- Persisted playback mode preferences for shuffle and repeat behavior.
+- Controller and browser tests covering shuffle, repeat-one, repeat-all, and persisted mode state.
+
+### Changed
+- Playback advance rules now resolve queue items before shuffle and repeat behavior.
+- Updated README architecture notes for the playback-mode flow.
+
 ## [0.9.0] - 2026-06-25
 ### Added
 - Explicit up-next queue controls so playlist rows can schedule tracks to play next.

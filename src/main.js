@@ -20,6 +20,7 @@ const preferencesStore = createPreferencesStore(window.localStorage);
 const initialPreferences = preferencesStore.load();
 
 const view = createPlayerView({
+  onCycleRepeatMode: () => controller.cycleRepeatMode(),
   onFilterChange: (value) => controller.setFilterQuery(value),
   onFilterModeChange: (value) => controller.setFilterMode(value),
   onNext: () => controller.next(),
@@ -32,6 +33,7 @@ const view = createPlayerView({
   onToggleFavoriteTrack: (trackId) => controller.toggleFavoriteTrack(trackId),
   onToggleMute: () => controller.toggleMute(),
   onTogglePlayback: () => controller.togglePlayback(),
+  onToggleShuffle: () => controller.toggleShuffle(),
   onTrackSelect: (trackId) => controller.playSelectedTrack(trackId)
 });
 

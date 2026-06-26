@@ -1,6 +1,6 @@
 /**
  * tests/browser/music-player.spec.js
- * Verifies core browser interactions for playback controls, queueing, search, favorites, and recents.
+ * Verifies core browser interactions for playback controls, queueing, playback modes, search, favorites, and recents.
  * Connects to: playwright.config.js, index.html, src/main.js
  * Created: 2026-06-25
  */
@@ -65,7 +65,7 @@ async function installFakeAudio(page) {
   });
 }
 
-test("music player supports playback controls, queueing, search, favorites, and recents", async ({ page }) => {
+test("music player supports playback controls, queueing, playback modes, search, favorites, and recents", async ({ page }) => {
   await installFakeAudio(page);
   await page.goto("/");
 
@@ -89,6 +89,13 @@ test("music player supports playback controls, queueing, search, favorites, and 
   await page.locator("#next-button").click();
   await expect(page.locator("#track-title")).toHaveText("Night Fall");
   await expect(page.locator("#queue-section")).toBeHidden();
+
+  await page.locator("#shuffle-button").click();
+  await expect(page.locator("#shuffle-button")).toHaveAttribute("aria-pressed", "true");
+  await page.locator("#repeat-button").click();
+  await expect(page.locator("#repeat-button")).toHaveText("Repeat: All");
+  await expect(page.locator("#playback-mode-indicator")).toContainText("Shuffle on");
+  await expect(page.locator("#playback-mode-indicator")).toContainText("Repeat all");
 
   await page.getByLabel("Sort playlist tracks").selectOption("title-asc");
   await expect(playlistButtons.first()).toContainText("City Lights");
@@ -121,4 +128,6 @@ test("music player supports playback controls, queueing, search, favorites, and 
   await expect(page.locator("#recent-tracks")).toContainText("Resume at 1:30");
   await expect(page.getByRole("button", { name: /^Favorites \(1\)$/ })).toBeVisible();
   await expect(page.getByLabel("Sort playlist tracks")).toHaveValue("title-asc");
+  await expect(page.locator("#shuffle-button")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#repeat-button")).toHaveText("Repeat: All");
 });

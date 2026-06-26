@@ -5,7 +5,7 @@
  * Created: 2026-06-25
  */
 
-import { SEEK_RANGE_MAX, SORT_MODES, VOLUME_RANGE_MAX } from "../config/appConfig.js";
+import { REPEAT_MODES, SEEK_RANGE_MAX, SORT_MODES, VOLUME_RANGE_MAX } from "../config/appConfig.js";
 import { renderPlaylist } from "./renderPlaylist.js";
 import { renderQueue } from "./renderQueue.js";
 import { renderRecentTracks } from "./renderRecentTracks.js";
@@ -15,6 +15,7 @@ import { formatTime } from "../utils/formatTime.js";
 /**
  * Creates the DOM view adapter for the music player interface.
  * @param {{
+ *   onCycleRepeatMode: () => void,
  *   onFilterChange: (value: string) => void,
  *   onFilterModeChange: (value: string) => void,
  *   onNext: () => void,
@@ -27,6 +28,7 @@ import { formatTime } from "../utils/formatTime.js";
  *   onToggleFavoriteTrack: (trackId: string) => void,
  *   onToggleMute: () => void,
  *   onTogglePlayback: () => void,
+ *   onToggleShuffle: () => void,
  *   onTrackSelect: (trackId: string) => void
  * }} callbacks Player interaction callbacks.
  * @returns {{ render: (state: object) => void }}
@@ -49,6 +51,9 @@ export function createPlayerView(callbacks) {
   const muteButton = document.querySelector("#mute-button");
   const previousButton = document.querySelector("#previous-button");
   const nextButton = document.querySelector("#next-button");
+  const shuffleButton = document.querySelector("#shuffle-button");
+  const repeatButton = document.querySelector("#repeat-button");
+  const playbackModeIndicator = document.querySelector("#playback-mode-indicator");
   const allTracksButton = document.querySelector("#all-tracks-button");
   const favoriteTracksButton = document.querySelector("#favorite-tracks-button");
   const playlistSearchInput = document.querySelector("#playlist-search");
@@ -61,6 +66,8 @@ export function createPlayerView(callbacks) {
   previousButton.addEventListener("click", callbacks.onPrevious);
   nextButton.addEventListener("click", callbacks.onNext);
   muteButton.addEventListener("click", callbacks.onToggleMute);
+  shuffleButton.addEventListener("click", callbacks.onToggleShuffle);
+  repeatButton.addEventListener("click", callbacks.onCycleRepeatMode);
   allTracksButton.addEventListener("click", () => {
     callbacks.onFilterModeChange("all");
   });
@@ -123,10 +130,13 @@ export function createPlayerView(callbacks) {
      *   filteredTracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>,
      *   isPlaying: boolean,
      *   isMuted: boolean,
+     *   isShuffleEnabled: boolean,
      *   message: string,
+     *   playbackModeLabel: string,
      *   playlistMessage: string,
      *   queuedTracks: Array<{ id: string, title: string, artist: string }>,
      *   recentTracks: Array<{ id: string, title: string, artist: string, resumeSeconds: number }>,
+     *   repeatMode: string,
      *   selectedTrack: { id: string, title: string, artist: string } | null,
      *   sortMode: string,
      *   volume: number
@@ -144,10 +154,13 @@ export function createPlayerView(callbacks) {
         filteredTracks,
         isMuted,
         isPlaying,
+        isShuffleEnabled,
         message,
+        playbackModeLabel,
         playlistMessage,
         queuedTracks,
         recentTracks,
+        repeatMode,
         selectedTrack,
         sortMode,
         volume
@@ -171,6 +184,16 @@ export function createPlayerView(callbacks) {
       seekSlider.disabled = !hasTrack;
       volumeSlider.value = `${Math.round(volume * VOLUME_RANGE_MAX)}`;
       shortcutHint.textContent = "Shortcuts: Space play/pause, Left/Right previous/next, M mute";
+      playbackModeIndicator.textContent = playbackModeLabel;
+      shuffleButton.setAttribute("aria-pressed", `${isShuffleEnabled}`);
+      shuffleButton.classList.toggle("filter-toggle-active", isShuffleEnabled);
+      repeatButton.setAttribute("aria-pressed", `${repeatMode !== REPEAT_MODES.OFF}`);
+      repeatButton.classList.toggle("filter-toggle-active", repeatMode !== REPEAT_MODES.OFF);
+      repeatButton.textContent = repeatMode === REPEAT_MODES.ALL
+        ? "Repeat: All"
+        : repeatMode === REPEAT_MODES.ONE
+          ? "Repeat: One"
+          : "Repeat: Off";
       allTracksButton.setAttribute("aria-pressed", `${filterMode === "all"}`);
       favoriteTracksButton.setAttribute("aria-pressed", `${filterMode === "favorites"}`);
       allTracksButton.classList.toggle("filter-toggle-active", filterMode === "all");

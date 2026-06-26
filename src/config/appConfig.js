@@ -24,6 +24,11 @@ export const FILTER_MODES = {
 };
 export const MINIMUM_PROGRESS_SECONDS = 5;
 export const RECENT_TRACK_LIMIT = 5;
+export const REPEAT_MODES = {
+  ALL: "all",
+  OFF: "off",
+  ONE: "one"
+};
 export const SEEK_RANGE_MAX = 100;
 export const SORT_MODES = {
   ARTIST_ASC: "artist-asc",

@@ -21,7 +21,9 @@ test("preferences store loads defaults when storage is empty", () => {
   assert.deepEqual(store.load(), {
     favoriteTrackIds: [],
     isMuted: false,
+    isShuffleEnabled: false,
     recentTrackIds: [],
+    repeatMode: "off",
     selectedTrackId: null,
     sortMode: "default",
     trackProgressSeconds: {},
@@ -37,7 +39,9 @@ test("preferences store clamps and saves values", () => {
       return JSON.stringify({
         favoriteTrackIds: ["two", 4, "one"],
         isMuted: 1,
+        isShuffleEnabled: "yes",
         recentTrackIds: ["two", 8, "one"],
+        repeatMode: "all",
         selectedTrackId: "two",
         sortMode: "title-asc",
         trackProgressSeconds: {
@@ -58,7 +62,9 @@ test("preferences store clamps and saves values", () => {
   assert.deepEqual(store.load(), {
     favoriteTrackIds: ["two", "one"],
     isMuted: true,
+    isShuffleEnabled: true,
     recentTrackIds: ["two", "one"],
+    repeatMode: "all",
     selectedTrackId: "two",
     sortMode: "title-asc",
     trackProgressSeconds: {
@@ -71,7 +77,9 @@ test("preferences store clamps and saves values", () => {
   store.save({
     favoriteTrackIds: ["one", "two"],
     isMuted: false,
+    isShuffleEnabled: true,
     recentTrackIds: ["two", "one"],
+    repeatMode: "one",
     selectedTrackId: "one",
     sortMode: "artist-asc",
     trackProgressSeconds: {
@@ -85,7 +93,9 @@ test("preferences store clamps and saves values", () => {
   assert.deepEqual(JSON.parse(savedValue), {
     favoriteTrackIds: ["one", "two"],
     isMuted: false,
+    isShuffleEnabled: true,
     recentTrackIds: ["two", "one"],
+    repeatMode: "one",
     selectedTrackId: "one",
     sortMode: "artist-asc",
     trackProgressSeconds: {

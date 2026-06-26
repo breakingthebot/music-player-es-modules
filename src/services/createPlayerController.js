@@ -10,6 +10,7 @@ import {
   FILTER_MODES,
   MINIMUM_PROGRESS_SECONDS,
   RECENT_TRACK_LIMIT,
+  REPEAT_MODES,
   SORT_MODES
 } from "../config/appConfig.js";
 import { clampNumber } from "../utils/clampNumber.js";
@@ -35,7 +36,9 @@ import { sortTracks } from "./sortTracks.js";
  *   initialPreferences?: {
  *     favoriteTrackIds?: string[],
  *     isMuted?: boolean,
+ *     isShuffleEnabled?: boolean,
  *     recentTrackIds?: string[],
+ *     repeatMode?: string,
  *     selectedTrackId?: string | null,
  *     sortMode?: string,
  *     trackProgressSeconds?: Record<string, number>,
@@ -46,16 +49,20 @@ import { sortTracks } from "./sortTracks.js";
  *   onPreferencesChange?: (preferences: {
  *     favoriteTrackIds: string[],
  *     isMuted: boolean,
+ *     isShuffleEnabled: boolean,
  *     recentTrackIds: string[],
+ *     repeatMode: string,
  *     selectedTrackId: string | null,
  *     sortMode: string,
  *     trackProgressSeconds: Record<string, number>,
  *     volume: number
  *   }) => void,
+ *   randomNumber?: () => number,
  *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>
  * }} dependencies The controller dependencies.
  * @returns {{
  *   bootstrap: () => void,
+ *   cycleRepeatMode: () => void,
  *   getState: () => object,
  *   next: () => void,
  *   playSelectedTrack: (trackId: string) => Promise<void>,
@@ -69,7 +76,8 @@ import { sortTracks } from "./sortTracks.js";
  *   seekTo: (ratio: number) => void,
  *   toggleFavoriteTrack: (trackId: string) => void,
  *   toggleMute: () => void,
- *   togglePlayback: () => Promise<void>
+ *   togglePlayback: () => Promise<void>,
+ *   toggleShuffle: () => void
  * }}
  */
 export function createPlayerController({
@@ -78,13 +86,18 @@ export function createPlayerController({
   messages,
   onPreferencesChange = () => {},
   onStateChange,
+  randomNumber = Math.random,
   tracks
 }) {
   let selectedIndex = getInitialSelectedIndex(tracks, initialPreferences.selectedTrackId);
   let isPlaying = false;
   let isMuted = Boolean(initialPreferences.isMuted);
+  let isShuffleEnabled = Boolean(initialPreferences.isShuffleEnabled);
   let filterMode = FILTER_MODES.ALL;
   let filterQuery = "";
+  let repeatMode = Object.values(REPEAT_MODES).includes(initialPreferences.repeatMode)
+    ? initialPreferences.repeatMode
+    : REPEAT_MODES.OFF;
   let sortMode = Object.values(SORT_MODES).includes(initialPreferences.sortMode)
     ? initialPreferences.sortMode
     : SORT_MODES.DEFAULT;
@@ -250,6 +263,21 @@ export function createPlayerController({
   }
 
   /**
+   * Produces a short user-facing playback mode label.
+   * @returns {string}
+   */
+  function getPlaybackModeLabel() {
+    const shuffleLabel = isShuffleEnabled ? "Shuffle on" : "Shuffle off";
+    const repeatLabel = repeatMode === REPEAT_MODES.ALL
+      ? "Repeat all"
+      : repeatMode === REPEAT_MODES.ONE
+        ? "Repeat track"
+        : "Repeat off";
+
+    return `${shuffleLabel}. ${repeatLabel}.`;
+  }
+
+  /**
    * Produces the current player view model.
    * @returns {object}
    */
@@ -273,10 +301,13 @@ export function createPlayerController({
       filteredTracks,
       isPlaying,
       isMuted,
+      isShuffleEnabled,
       message,
+      playbackModeLabel: getPlaybackModeLabel(),
       playlistMessage: getPlaylistMessage(filteredTracks.length),
       queuedTracks,
       recentTracks,
+      repeatMode,
       selectedTrack,
       sortMode,
       tracks,
@@ -300,7 +331,9 @@ export function createPlayerController({
     onPreferencesChange({
       favoriteTrackIds: [...favoriteTrackIds],
       isMuted,
+      isShuffleEnabled,
       recentTrackIds,
+      repeatMode,
       selectedTrackId: tracks[selectedIndex]?.id ?? null,
       sortMode,
       trackProgressSeconds,
@@ -344,6 +377,64 @@ export function createPlayerController({
   }
 
   /**
+   * Returns a randomized playlist index that differs from the current track when possible.
+   * @returns {number}
+   */
+  function getShuffledIndex() {
+    if (tracks.length <= 1) {
+      return selectedIndex;
+    }
+
+    const candidateIndexes = tracks
+      .map((track, index) => index)
+      .filter((index) => index !== selectedIndex);
+    const nextPosition = Math.floor(randomNumber() * candidateIndexes.length);
+
+    return candidateIndexes[Math.min(Math.max(nextPosition, 0), candidateIndexes.length - 1)];
+  }
+
+  /**
+   * Resolves the next playback index for non-queued playback.
+   * @param {"user-next" | "track-ended"} reason The playback advance reason.
+   * @returns {number | null}
+   */
+  function resolvePlaybackAdvanceIndex(reason) {
+    if (tracks.length === 0) {
+      return null;
+    }
+
+    if (reason === "track-ended" && repeatMode === REPEAT_MODES.ONE) {
+      return selectedIndex;
+    }
+
+    if (isShuffleEnabled) {
+      return getShuffledIndex();
+    }
+
+    const lastIndex = tracks.length - 1;
+
+    if (selectedIndex < lastIndex) {
+      return selectedIndex + 1;
+    }
+
+    if (repeatMode === REPEAT_MODES.ALL || reason === "user-next") {
+      return 0;
+    }
+
+    return null;
+  }
+
+  /**
+   * Handles end-of-track behavior when playback should stop instead of advancing.
+   * @returns {void}
+   */
+  function finalizePlaybackAtTrackEnd() {
+    isPlaying = false;
+    message = messages.READY;
+    notify();
+  }
+
+  /**
    * Switches playback to a specific track index.
    * @param {number} nextIndex The next index to select.
    * @returns {Promise<void>}
@@ -364,14 +455,24 @@ export function createPlayerController({
   }
 
   /**
-   * Advances to a wrapped playlist index.
-   * @param {number} direction Positive or negative playlist movement.
-   * @returns {number}
+   * Advances playback according to the queue and playback mode settings.
+   * @param {"user-next" | "track-ended"} reason The playback advance reason.
+   * @returns {void}
    */
-  function getWrappedIndex(direction) {
-    const trackCount = tracks.length;
+  function advancePlayback(reason) {
+    if (tracks.length === 0) {
+      return;
+    }
 
-    return (selectedIndex + direction + trackCount) % trackCount;
+    const queuedIndex = consumeQueuedIndex();
+    const nextIndex = queuedIndex ?? resolvePlaybackAdvanceIndex(reason);
+
+    if (nextIndex === null) {
+      finalizePlaybackAtTrackEnd();
+      return;
+    }
+
+    void playIndex(nextIndex);
   }
 
   audioAdapter.on("ended", () => {
@@ -381,10 +482,7 @@ export function createPlayerController({
       clearTrackProgress(selectedTrack.id);
     }
 
-    if (tracks.length > 0) {
-      const queuedIndex = consumeQueuedIndex();
-      void playIndex(queuedIndex ?? getWrappedIndex(1));
-    }
+    advancePlayback("track-ended");
   });
 
   audioAdapter.on("playing", () => {
@@ -440,6 +538,20 @@ export function createPlayerController({
     },
 
     /**
+     * Cycles repeat mode through off, all, and one.
+     * @returns {void}
+     */
+    cycleRepeatMode() {
+      repeatMode = repeatMode === REPEAT_MODES.OFF
+        ? REPEAT_MODES.ALL
+        : repeatMode === REPEAT_MODES.ALL
+          ? REPEAT_MODES.ONE
+          : REPEAT_MODES.OFF;
+      persistPreferences();
+      notify();
+    },
+
+    /**
      * Returns the current state snapshot.
      * @returns {object}
      */
@@ -452,10 +564,7 @@ export function createPlayerController({
      * @returns {void}
      */
     next() {
-      if (tracks.length > 0) {
-        const queuedIndex = consumeQueuedIndex();
-        void playIndex(queuedIndex ?? getWrappedIndex(1));
-      }
+      advancePlayback("user-next");
     },
 
     /**
@@ -477,7 +586,8 @@ export function createPlayerController({
      */
     previous() {
       if (tracks.length > 0) {
-        void playIndex(getWrappedIndex(-1));
+        const nextIndex = selectedIndex > 0 ? selectedIndex - 1 : tracks.length - 1;
+        void playIndex(nextIndex);
       }
     },
 
@@ -643,6 +753,16 @@ export function createPlayerController({
         message = messages.LOAD_ERROR;
         notify();
       }
+    },
+
+    /**
+     * Toggles shuffle mode and persists the latest value.
+     * @returns {void}
+     */
+    toggleShuffle() {
+      isShuffleEnabled = !isShuffleEnabled;
+      persistPreferences();
+      notify();
     }
   };
 }

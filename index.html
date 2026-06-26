@@ -61,6 +61,14 @@
             </button>
             <button id="next-button" type="button" class="control-button">Next</button>
           </div>
+          <div class="playback-mode-row" aria-label="Playback modes">
+            <button id="shuffle-button" type="button" class="control-button control-button-secondary" aria-pressed="false">
+              Shuffle
+            </button>
+            <button id="repeat-button" type="button" class="control-button control-button-secondary" aria-pressed="false">
+              Repeat: Off
+            </button>
+          </div>
           <div class="volume-row">
             <button id="mute-button" type="button" class="control-button">Mute</button>
             <label class="volume-label" for="volume-slider">Volume</label>
@@ -74,6 +82,7 @@
               aria-label="Adjust playback volume"
             />
           </div>
+          <p id="playback-mode-indicator" class="playback-mode-indicator">Shuffle off. Repeat off.</p>
           <p id="shortcut-hint" class="shortcut-hint">Shortcuts are loading.</p>
           <section id="queue-section" class="queue-section" hidden aria-labelledby="queue-title">
             <div class="queue-header">
