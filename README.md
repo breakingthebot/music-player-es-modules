@@ -27,8 +27,8 @@ See `.env.example` for the canonical placeholder.
 - Create a Vercel production deployment: `npm run deploy:prod`
 
 ## Deployed
-This project is prepared for Vercel CLI deployment.
-Preview and production URLs are created from the terminal so the deployed result matches version-controlled code.
+Live deployment: `https://music-player-es-modules.vercel.app`
+Latest direct deployment URL: `https://music-player-es-modules-2v3o3fwiu-b-bots-projects-bcdcaeb1.vercel.app`
 
 ## Architecture Notes
 This iteration makes the queue more useful by letting users reorder it without changing the underlying playlist or the persisted playback preferences. The controller now exposes small, explicit queue movement operations that only affect the session queue, and the playback path still consumes the queue from the front before any shuffle or repeat logic runs. That keeps the queue deterministic even as the player gains more playback modes.
@@ -51,3 +51,4 @@ This deployment-hardening pass keeps that behavior intact while making the repo 
 - Shuffle and repeat preferences are persisted locally, while queue order remains session-only and higher priority than playback-mode rules.
 - Queue reordering is also session-only and changes only the explicit up-next order, not the playlist itself.
 - Deployments are intended to run through the Vercel CLI, with `.vercelignore` mirroring the local-only exclusions needed for a clean hosted build.
+- The current live Vercel deployment is available at `music-player-es-modules.vercel.app`.
