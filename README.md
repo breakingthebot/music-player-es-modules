@@ -29,12 +29,11 @@ See `.env.example` for the canonical placeholder.
 
 ## Deployed
 Live deployment: `https://music-player-es-modules.vercel.app`
-Latest direct deployment URL: `https://music-player-es-modules-kb9tyc0wq-b-bots-projects-bcdcaeb1.vercel.app`
 
 ## Architecture Notes
-This iteration adds local audio import without replacing the seeded demo playlist or weakening the current playback model. Imported `.mp3` and `.wav` files are normalized through a dedicated import service that creates blob URLs, reads metadata for track duration, and converts the files into the same track shape used everywhere else in the app. That means imported tracks participate in the existing search, sort, queue, favorites, and playback flows instead of creating a second-track system just for local files.
+This iteration makes local audio import durable instead of session-only. Imported `.mp3` and `.wav` files still move through a dedicated import service that creates playable blob URLs, reads metadata for track duration, and normalizes each file into the same track shape used by the seeded playlist. The new part is a separate imported-track store that saves the original file blobs and metadata in IndexedDB, then recreates fresh blob URLs on the next load so those tracks come back as normal playlist items in the same browser.
 
-On the UI side, the playlist panel now includes a focused local-audio import control with a visible status message for importing, skipping unsupported files, or reporting failures. The controller only needed one new capability here: appending tracks into the active playlist at runtime. That keeps the import path modular and testable while preserving the seeded playlist, the queue behavior, and the deployed static app structure.
+On the UI side, the playlist panel keeps the same focused import control and status messaging, but the startup flow is now asynchronous so the player can restore saved local tracks before the controller boots. That keeps search, sort, queueing, favorites, recents, and playback working across both seeded tracks and restored local files without splitting the app into separate playlist systems.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.
@@ -51,4 +50,4 @@ On the UI side, the playlist panel now includes a focused local-audio import con
 - Queue reordering is also session-only and changes only the explicit up-next order, not the playlist itself.
 - Deployments are intended to run through the Vercel CLI, with `.vercelignore` and `vercel.json` forcing a static hosting path instead of the local Node server entrypoint.
 - The current live Vercel deployment is available at `music-player-es-modules.vercel.app`.
-- Imported local tracks are session-only because blob URLs are browser-local and are not valid across reloads or devices.
+- Imported local tracks are persisted in IndexedDB for the current browser, but they do not sync across devices or browsers.

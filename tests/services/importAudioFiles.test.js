@@ -36,6 +36,16 @@ test("importAudioFiles creates playable tracks from supported files", async () =
       title: "My Song"
     }
   ]);
+  assert.deepEqual(result.storedTracks, [
+    {
+      blob: files[0],
+      durationSeconds: 181,
+      fileName: "My Song.mp3",
+      id: "local-my-song-mp3-2048-100-12345-0",
+      mimeType: "audio/mpeg",
+      title: "My Song"
+    }
+  ]);
 });
 
 test("importAudioFiles skips unsupported file types", async () => {
@@ -55,4 +65,5 @@ test("importAudioFiles skips unsupported file types", async () => {
 
   assert.deepEqual(result.tracks, []);
   assert.deepEqual(result.skippedFiles, ["notes.txt"]);
+  assert.deepEqual(result.storedTracks, []);
 });

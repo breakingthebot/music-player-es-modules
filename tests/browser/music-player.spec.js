@@ -143,4 +143,5 @@ test("music player supports playback controls, queueing, playback modes, search,
   await expect(page.getByLabel("Sort playlist tracks")).toHaveValue("title-asc");
   await expect(page.locator("#shuffle-button")).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("#repeat-button")).toHaveText("Repeat: All");
+  await expect(playlistButtons.filter({ hasText: "Local Demo" })).toBeVisible();
 });

@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.14.0] - 2026-06-26
+### Added
+- IndexedDB-backed imported-track storage for local MP3 and WAV files.
+- Startup restoration of previously imported local tracks in the same browser.
+- Unit coverage for imported-track persistence plus browser coverage for reload restoration.
+
+### Changed
+- Extended the import service to return persistence-ready imported file records alongside playable tracks.
+- Updated README architecture notes for browser-local imported-track persistence.
+
 ## [0.13.0] - 2026-06-26
 ### Added
 - Local MP3 and WAV import controls in the playlist panel.

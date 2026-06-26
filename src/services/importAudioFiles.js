@@ -25,7 +25,11 @@ const SUPPORTED_EXTENSIONS = [".mp3", ".wav"];
  *   getAudioDuration?: (audioUrl: string) => Promise<number>,
  *   now?: () => number
  * }} dependencies Import dependencies.
- * @returns {Promise<{ tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>, skippedFiles: string[] }>}
+ * @returns {Promise<{
+ *   skippedFiles: string[],
+ *   storedTracks: Array<{ blob: File, durationSeconds: number, fileName: string, id: string, mimeType: string, title: string }>,
+ *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>
+ * }>}
  */
 export async function importAudioFiles({
   createObjectUrl = (file) => URL.createObjectURL(file),
@@ -35,6 +39,7 @@ export async function importAudioFiles({
 }) {
   const importedTracks = [];
   const skippedFiles = [];
+  const storedTracks = [];
 
   for (const [index, file] of files.entries()) {
     if (!isSupportedAudioFile(file)) {
@@ -46,13 +51,23 @@ export async function importAudioFiles({
 
     try {
       const durationSeconds = await getAudioDuration(audioUrl);
-      importedTracks.push(createTrack({
+      const importedTrack = createTrack({
         artist: "Local file",
         audioUrl,
         durationSeconds: Math.max(Math.round(durationSeconds), 1),
         id: buildImportedTrackId(file, index, now()),
         title: getTrackTitleFromFileName(file.name)
-      }));
+      });
+
+      importedTracks.push(importedTrack);
+      storedTracks.push({
+        blob: file,
+        durationSeconds: importedTrack.durationSeconds,
+        fileName: file.name,
+        id: importedTrack.id,
+        mimeType: file.type,
+        title: importedTrack.title
+      });
     } catch (error) {
       URL.revokeObjectURL(audioUrl);
       throw error;
@@ -61,6 +76,7 @@ export async function importAudioFiles({
 
   return {
     skippedFiles,
+    storedTracks,
     tracks: importedTracks
   };
 }
