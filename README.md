@@ -31,9 +31,9 @@ See `.env.example` for the canonical placeholder.
 Live deployment: `https://music-player-es-modules.vercel.app`
 
 ## Architecture Notes
-This iteration focuses on presentation polish instead of new playback behavior. The app keeps the same modular player logic, but the shell now has a stronger visual hierarchy: a more deliberate hero section, richer card treatments, a clearer transport panel, and a playlist area that feels like a real local library instead of a default form stack. The goal was to make the existing features feel finished without pushing layout logic down into the player services.
+This iteration is a restraint pass on the interface rather than a feature change. The app keeps every existing playback, queue, favorites, import, and persistence workflow, but the shell is now quieter: smaller typography, flatter cards, simpler buttons, less decoration, and a more compact hero. The goal was to keep the player feeling capable without making the screen compete with the content.
 
-Most of the work lives in the static shell and stylesheet rather than the controller. Typography, spacing, backgrounds, and surface states were tightened so queue controls, recent tracks, import actions, and the main playback state all read as one consistent system. The important structural choice here is that the visual refresh stays mostly in `index.html` and `styles.css`, which preserves the existing module boundaries and keeps the behavior tests stable.
+Most of the work still lives in the static shell and stylesheet rather than the controller. By simplifying `index.html` framing and reducing the visual weight in `styles.css`, the UI can stay sleek and minimal while the tested behavior layer remains untouched. That keeps the design iteration low-risk and easy to continue refining.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.

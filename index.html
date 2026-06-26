@@ -19,35 +19,18 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="page-noise" aria-hidden="true"></div>
     <main class="app-shell" aria-labelledby="app-title">
       <section class="hero-panel" aria-describedby="app-description">
         <div class="hero-copy-column">
           <p class="eyebrow">Native ES Modules</p>
           <h1 id="app-title">Modular Music Player</h1>
           <p id="app-description" class="hero-copy">
-            A polished local-first listening deck with persistent imports, queue controls,
-            and modular browser-native playback.
+            Local-first playback with persistent imports, queue controls, and clean browser-native audio.
           </p>
-          <div class="hero-pill-row" aria-label="Highlights">
-            <span class="hero-pill">Local MP3/WAV import</span>
-            <span class="hero-pill">Persistent browser library</span>
-            <span class="hero-pill">Queue, favorites, recents</span>
-          </div>
-        </div>
-        <div class="hero-spotlight" aria-hidden="true">
-          <div class="hero-orb hero-orb-large"></div>
-          <div class="hero-orb hero-orb-small"></div>
-          <div class="hero-eq-card">
-            <span class="hero-eq-label">Live Session</span>
-            <div class="hero-eq-bars">
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-            <p class="hero-eq-copy">Import, queue, and resume tracks without leaving the browser.</p>
+          <div class="hero-meta-row" aria-label="Highlights">
+            <span>Import MP3/WAV</span>
+            <span>Persistent local library</span>
+            <span>Queue, favorites, recents</span>
           </div>
         </div>
       </section>
@@ -60,7 +43,6 @@
               <h2 id="track-title">Loading playlist...</h2>
               <p id="track-meta">Preparing player</p>
             </div>
-            <span class="panel-badge">Audio Deck</span>
           </div>
           <div class="progress-row" aria-label="Playback progress">
             <span id="current-time">0:00</span>
@@ -91,7 +73,7 @@
           <div class="panel-heading panel-heading-compact">
             <div>
               <p class="status-label">Transport</p>
-              <p class="controls-kicker">Dial in playback, volume, and mode state.</p>
+              <p class="controls-kicker">Playback, volume, and mode controls.</p>
             </div>
           </div>
           <div class="controls-row">
@@ -139,9 +121,8 @@
               <div>
                 <p class="status-label">Library</p>
                 <h2 id="playlist-title">Playlist</h2>
-                <p class="playlist-subtitle">Choose a track to start playback or build a local listening stack.</p>
+                <p class="playlist-subtitle">Choose a track or add your own local files.</p>
               </div>
-              <span class="panel-badge panel-badge-soft">Persistent imports</span>
             </div>
             <div class="playlist-import-row">
               <label class="playlist-search-label" for="playlist-import-input">Add local audio</label>

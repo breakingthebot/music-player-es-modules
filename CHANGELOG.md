@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.18.0] - 2026-06-26
+### Changed
+- Simplified the interface into a sleeker, more minimal visual system with smaller typography and quieter surfaces.
+- Reduced visual noise in the hero, controls, and playlist shell without removing any player features.
+- Updated README architecture notes for the minimal UI pass.
+
 ## [0.17.0] - 2026-06-26
 ### Added
 - A more polished visual shell with a redesigned hero, richer panel hierarchy, and upgraded surface styling.
