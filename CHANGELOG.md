@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.8.0] - 2026-06-25
+### Added
+- Playlist sorting options for default order, title, artist, and duration.
+- Keyboard row navigation across playlist items and recent-track buttons.
+- Sorting utility tests and browser assertions for sort mode and keyboard navigation.
+
+### Changed
+- Extended local preference storage to include the persisted playlist sort mode.
+- Updated README architecture notes for sorting and keyboard navigation behavior.
+
 ## [0.7.0] - 2026-06-25
 ### Added
 - GitHub Actions CI workflow for unit and browser interaction tests.

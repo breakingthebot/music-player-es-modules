@@ -1,13 +1,14 @@
 /**
  * src/components/createPlayerView.js
  * Owns DOM references and translates controller state into UI updates.
- * Connects to: src/components/renderPlaylist.js, src/components/renderRecentTracks.js, src/utils/formatTime.js
+ * Connects to: src/components/renderPlaylist.js, src/components/renderRecentTracks.js, src/utils/attachListKeyboardNavigation.js, src/utils/formatTime.js
  * Created: 2026-06-25
  */
 
-import { SEEK_RANGE_MAX, VOLUME_RANGE_MAX } from "../config/appConfig.js";
+import { SEEK_RANGE_MAX, SORT_MODES, VOLUME_RANGE_MAX } from "../config/appConfig.js";
 import { renderPlaylist } from "./renderPlaylist.js";
 import { renderRecentTracks } from "./renderRecentTracks.js";
+import { attachListKeyboardNavigation } from "../utils/attachListKeyboardNavigation.js";
 import { formatTime } from "../utils/formatTime.js";
 
 /**
@@ -17,6 +18,7 @@ import { formatTime } from "../utils/formatTime.js";
  *   onFilterModeChange: (value: string) => void,
  *   onNext: () => void,
  *   onPrevious: () => void,
+ *   onSetSortMode: (value: string) => void,
  *   onSetVolume: (level: number) => void,
  *   onSeek: (ratio: number) => void,
  *   onToggleFavoriteTrack: (trackId: string) => void,
@@ -45,6 +47,7 @@ export function createPlayerView(callbacks) {
   const favoriteTracksButton = document.querySelector("#favorite-tracks-button");
   const playlistSearchInput = document.querySelector("#playlist-search");
   const clearSearchButton = document.querySelector("#clear-search-button");
+  const sortSelect = document.querySelector("#playlist-sort");
   const playlist = document.querySelector("#playlist");
   const playlistEmptyState = document.querySelector("#playlist-empty-state");
   const shortcutHint = document.querySelector("#shortcut-hint");
@@ -68,6 +71,9 @@ export function createPlayerView(callbacks) {
   volumeSlider.addEventListener("input", (event) => {
     const level = Number(event.currentTarget.value) / VOLUME_RANGE_MAX;
     callbacks.onSetVolume(level);
+  });
+  sortSelect.addEventListener("change", (event) => {
+    callbacks.onSetSortMode(event.currentTarget.value);
   });
   playlistSearchInput.addEventListener("input", (event) => {
     callbacks.onFilterChange(event.currentTarget.value);
@@ -94,6 +100,9 @@ export function createPlayerView(callbacks) {
     }
   });
 
+  attachListKeyboardNavigation(playlist, ".playlist-button");
+  attachListKeyboardNavigation(recentTracksList, ".recent-track-button");
+
   return {
     /**
      * Renders the latest player state to the DOM.
@@ -109,8 +118,9 @@ export function createPlayerView(callbacks) {
      *   isMuted: boolean,
      *   message: string,
      *   playlistMessage: string,
-     *   recentTracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>,
+     *   recentTracks: Array<{ id: string, title: string, artist: string, resumeSeconds: number }>,
      *   selectedTrack: { id: string, title: string, artist: string } | null,
+     *   sortMode: string,
      *   volume: number
      * }} state The current player state.
      * @returns {void}
@@ -130,6 +140,7 @@ export function createPlayerView(callbacks) {
         playlistMessage,
         recentTracks,
         selectedTrack,
+        sortMode,
         volume
       } = state;
       const durationValue = durationSeconds || 0;
@@ -159,6 +170,10 @@ export function createPlayerView(callbacks) {
 
       if (playlistSearchInput.value !== filterQuery) {
         playlistSearchInput.value = filterQuery;
+      }
+
+      if (!Object.values(SORT_MODES).includes(sortSelect.value) || sortSelect.value !== sortMode) {
+        sortSelect.value = sortMode;
       }
 
       clearSearchButton.disabled = filterQuery.length === 0;

@@ -178,6 +178,7 @@ test("controller applies and persists saved preferences", () => {
     isMuted: true,
     recentTrackIds: ["two"],
     selectedTrackId: "two",
+    sortMode: "default",
     trackProgressSeconds: {},
     volume: 0.35
   });
@@ -317,6 +318,29 @@ test("controller exposes favorites empty messaging", () => {
 
   assert.equal(states.at(-1).playlistMessage, "No favorites available.");
   assert.equal(states.at(-1).filteredTracks.length, 0);
+});
+
+test("controller sorts filtered tracks and persists the selected sort mode", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const savedPreferences = [];
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onPreferencesChange: (preferences) => savedPreferences.push(preferences),
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.setSortMode("title-asc");
+
+  assert.equal(states.at(-1).sortMode, "title-asc");
+  assert.deepEqual(states.at(-1).filteredTracks.map((track) => track.title), [
+    "Track One",
+    "Track Two"
+  ]);
+  assert.equal(savedPreferences.at(-1).sortMode, "title-asc");
 });
 
 test("controller records recently played tracks in most-recent order", async () => {

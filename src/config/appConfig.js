@@ -25,5 +25,11 @@ export const FILTER_MODES = {
 export const MINIMUM_PROGRESS_SECONDS = 5;
 export const RECENT_TRACK_LIMIT = 5;
 export const SEEK_RANGE_MAX = 100;
+export const SORT_MODES = {
+  ARTIST_ASC: "artist-asc",
+  DEFAULT: "default",
+  DURATION_ASC: "duration-asc",
+  TITLE_ASC: "title-asc"
+};
 export const STORAGE_KEY = "music-player-preferences";
 export const VOLUME_RANGE_MAX = 100;

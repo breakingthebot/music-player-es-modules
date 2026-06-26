@@ -9,9 +9,11 @@ import {
   DEFAULT_VOLUME,
   FILTER_MODES,
   MINIMUM_PROGRESS_SECONDS,
-  RECENT_TRACK_LIMIT
+  RECENT_TRACK_LIMIT,
+  SORT_MODES
 } from "../config/appConfig.js";
 import { filterTracks } from "./filterTracks.js";
+import { sortTracks } from "./sortTracks.js";
 import { clampNumber } from "../utils/clampNumber.js";
 import { updateRecentTrackIds } from "../utils/updateRecentTrackIds.js";
 
@@ -35,6 +37,7 @@ import { updateRecentTrackIds } from "../utils/updateRecentTrackIds.js";
  *     isMuted?: boolean,
  *     recentTrackIds?: string[],
  *     selectedTrackId?: string | null,
+ *     sortMode?: string,
  *     trackProgressSeconds?: Record<string, number>,
  *     volume?: number
  *   },
@@ -45,6 +48,7 @@ import { updateRecentTrackIds } from "../utils/updateRecentTrackIds.js";
  *     isMuted: boolean,
  *     recentTrackIds: string[],
  *     selectedTrackId: string | null,
+ *     sortMode: string,
  *     trackProgressSeconds: Record<string, number>,
  *     volume: number
  *   }) => void,
@@ -58,6 +62,7 @@ import { updateRecentTrackIds } from "../utils/updateRecentTrackIds.js";
  *   previous: () => void,
  *   setFilterMode: (value: string) => void,
  *   setFilterQuery: (value: string) => void,
+ *   setSortMode: (value: string) => void,
  *   setVolume: (level: number) => void,
  *   seekTo: (ratio: number) => void,
  *   toggleFavoriteTrack: (trackId: string) => void,
@@ -78,6 +83,9 @@ export function createPlayerController({
   let isMuted = Boolean(initialPreferences.isMuted);
   let filterMode = FILTER_MODES.ALL;
   let filterQuery = "";
+  let sortMode = Object.values(SORT_MODES).includes(initialPreferences.sortMode)
+    ? initialPreferences.sortMode
+    : SORT_MODES.DEFAULT;
   const favoriteTrackIds = new Set(
     Array.isArray(initialPreferences.favoriteTrackIds) ? initialPreferences.favoriteTrackIds : []
   );
@@ -232,7 +240,10 @@ export function createPlayerController({
    */
   function buildState() {
     const selectedTrack = tracks[selectedIndex] ?? null;
-    const filteredTracks = filterTracks(tracks, filterQuery, favoriteTrackIds, filterMode);
+    const filteredTracks = sortTracks(
+      filterTracks(tracks, filterQuery, favoriteTrackIds, filterMode),
+      sortMode
+    );
     const favoriteTracks = tracks.filter((track) => favoriteTrackIds.has(track.id));
     const recentTracks = getRecentTracks();
 
@@ -250,6 +261,7 @@ export function createPlayerController({
       playlistMessage: getPlaylistMessage(filteredTracks.length),
       recentTracks,
       selectedTrack,
+      sortMode,
       tracks,
       volume
     };
@@ -273,6 +285,7 @@ export function createPlayerController({
       isMuted,
       recentTrackIds,
       selectedTrackId: tracks[selectedIndex]?.id ?? null,
+      sortMode,
       trackProgressSeconds,
       volume
     });
@@ -450,6 +463,17 @@ export function createPlayerController({
      */
     setFilterQuery(value) {
       filterQuery = `${value}`;
+      notify();
+    },
+
+    /**
+     * Updates the active playlist sort mode and persists it.
+     * @param {string} value The requested sort mode.
+     * @returns {void}
+     */
+    setSortMode(value) {
+      sortMode = Object.values(SORT_MODES).includes(value) ? value : SORT_MODES.DEFAULT;
+      persistPreferences();
       notify();
     },
 

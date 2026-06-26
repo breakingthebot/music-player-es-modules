@@ -295,6 +295,26 @@ input {
   font-size: 0.9rem;
 }
 
+.playlist-sort-row {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.9rem;
+}
+
+.playlist-sort-select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.8rem 0.95rem;
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.playlist-sort-select:focus-visible {
+  outline: 2px solid rgba(193, 92, 45, 0.45);
+  outline-offset: 2px;
+}
+
 .filter-toggle-row {
   display: flex;
   gap: 0.75rem;

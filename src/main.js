@@ -24,6 +24,7 @@ const view = createPlayerView({
   onFilterModeChange: (value) => controller.setFilterMode(value),
   onNext: () => controller.next(),
   onPrevious: () => controller.previous(),
+  onSetSortMode: (value) => controller.setSortMode(value),
   onSetVolume: (level) => controller.setVolume(level),
   onSeek: (ratio) => controller.seekTo(ratio),
   onToggleFavoriteTrack: (trackId) => controller.toggleFavoriteTrack(trackId),

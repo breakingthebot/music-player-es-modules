@@ -79,9 +79,14 @@ test("music player supports playback controls, search, favorites, and recents", 
 
   const playlistButtons = page.locator(".playlist-button");
 
+  await page.getByLabel("Sort playlist tracks").selectOption("title-asc");
+  await expect(playlistButtons.first()).toContainText("City Lights");
+
   await page.getByLabel("Search tracks").fill("Night");
   await expect(playlistButtons.filter({ hasText: "Night Fall" })).toBeVisible();
   await expect(playlistButtons.filter({ hasText: "Sunrise Drive" })).toHaveCount(0);
+  await page.getByLabel("Search tracks").press("ArrowDown");
+  await expect(playlistButtons.filter({ hasText: "Night Fall" })).toBeFocused();
 
   await page.getByRole("button", { name: "Clear" }).click();
   await page.getByRole("button", { name: "Add Night Fall to favorites" }).click();
@@ -90,11 +95,19 @@ test("music player supports playback controls, search, favorites, and recents", 
   await expect(playlistButtons.filter({ hasText: "Sunrise Drive" })).toHaveCount(0);
 
   await page.getByRole("button", { name: "All tracks" }).click();
+  await playlistButtons.first().focus();
+  await playlistButtons.first().press("End");
+  await expect(playlistButtons.last()).toBeFocused();
   await playlistButtons.filter({ hasText: "Night Fall" }).click();
   await expect(page.locator("#recent-tracks-section")).toBeVisible();
   await expect(page.locator("#recent-tracks")).toContainText("Resume at 1:30");
+  const recentTrackButtons = page.locator(".recent-track-button");
+  await recentTrackButtons.first().focus();
+  await recentTrackButtons.first().press("End");
+  await expect(recentTrackButtons.last()).toBeFocused();
 
   await page.reload();
   await expect(page.locator("#recent-tracks")).toContainText("Resume at 1:30");
   await expect(page.getByRole("button", { name: /^Favorites \(1\)$/ })).toBeVisible();
+  await expect(page.getByLabel("Sort playlist tracks")).toHaveValue("title-asc");
 });
