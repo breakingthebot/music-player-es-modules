@@ -144,4 +144,11 @@ test("music player supports playback controls, queueing, playback modes, search,
   await expect(page.locator("#shuffle-button")).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("#repeat-button")).toHaveText("Repeat: All");
   await expect(playlistButtons.filter({ hasText: "Local Demo" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Remove imported track Local Demo" }).click();
+  await expect(page.locator("#playlist-import-status")).toContainText("Removed imported track");
+  await expect(playlistButtons.filter({ hasText: "Local Demo" })).toHaveCount(0);
+
+  await page.reload();
+  await expect(playlistButtons.filter({ hasText: "Local Demo" })).toHaveCount(0);
 });

@@ -12,10 +12,11 @@
  *   favoriteTrackIds: string[],
  *   onFavoriteToggle: (trackId: string) => void,
  *   onQueueTrack: (trackId: string) => void,
+ *   onRemoveImportedTrack: (trackId: string) => void,
  *   onTrackSelect: (trackId: string) => void,
  *   queuedTrackIds: string[],
  *   selectedTrackId: string | undefined,
- *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>
+ *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, isImported: boolean }>
  * }} dependencies Playlist rendering dependencies.
  * @returns {void}
  */
@@ -24,6 +25,7 @@ export function renderPlaylist({
   favoriteTrackIds,
   onFavoriteToggle,
   onQueueTrack,
+  onRemoveImportedTrack,
   onTrackSelect,
   queuedTrackIds,
   selectedTrackId,
@@ -89,7 +91,20 @@ export function renderPlaylist({
 
     const actions = document.createElement("div");
     actions.className = "playlist-actions";
-    actions.append(queueButton, favoriteButton);
+
+    if (track.isImported) {
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "remove-button";
+      removeButton.setAttribute("aria-label", `Remove imported track ${track.title}`);
+      removeButton.textContent = "Remove";
+      removeButton.addEventListener("click", () => {
+        onRemoveImportedTrack(track.id);
+      });
+      actions.append(queueButton, favoriteButton, removeButton);
+    } else {
+      actions.append(queueButton, favoriteButton);
+    }
 
     button.append(title, meta);
     row.append(button, actions);

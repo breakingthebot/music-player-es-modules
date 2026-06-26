@@ -23,6 +23,7 @@ test("createTrack returns an immutable normalized track", () => {
     audioUrl: "https://example.com/song.mp3",
     durationSeconds: 245,
     id: "demo",
+    isImported: false,
     title: "Example Song"
   });
   assert.throws(() => {
@@ -36,10 +37,12 @@ test("createTrack allows blob URLs for imported local audio", () => {
     audioUrl: "blob:example-track",
     durationSeconds: 245,
     id: "local-track",
+    isImported: true,
     title: "Imported Song"
   });
 
   assert.equal(track.audioUrl, "blob:example-track");
+  assert.equal(track.isImported, true);
 });
 
 test("createTrack rejects unsupported audio URL schemes", () => {

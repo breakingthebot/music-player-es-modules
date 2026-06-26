@@ -13,7 +13,8 @@
  * @param {string} rawTrack.artist The artist name.
  * @param {number} rawTrack.durationSeconds The expected track length in seconds.
  * @param {string} rawTrack.audioUrl The HTTPS or blob audio source URL.
- * @returns {{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }}
+ * @param {boolean} [rawTrack.isImported] Whether the track was imported locally by the user.
+ * @returns {{ id: string, title: string, artist: string, audioUrl: string, durationSeconds: number, isImported: boolean }}
  */
 export function createTrack(rawTrack) {
   const track = {
@@ -21,7 +22,8 @@ export function createTrack(rawTrack) {
     title: `${rawTrack.title}`.trim(),
     artist: `${rawTrack.artist}`.trim(),
     durationSeconds: Number(rawTrack.durationSeconds),
-    audioUrl: `${rawTrack.audioUrl}`.trim()
+    audioUrl: `${rawTrack.audioUrl}`.trim(),
+    isImported: Boolean(rawTrack.isImported)
   };
 
   if (!track.id || !track.title || !track.artist) {

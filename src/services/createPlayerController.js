@@ -58,20 +58,21 @@ import { sortTracks } from "./sortTracks.js";
  *     volume: number
  *   }) => void,
  *   randomNumber?: () => number,
- *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>
+ *   tracks: Array<{ id: string, title: string, artist: string, audioUrl: string, durationSeconds: number, isImported?: boolean }>
  * }} dependencies The controller dependencies.
  * @returns {{
- *   addTracks: (tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>) => void,
- *   bootstrap: () => void,
- *   cycleRepeatMode: () => void,
- *   getState: () => object,
- *   moveQueuedTrackDown: (trackId: string) => void,
- *   moveQueuedTrackUp: (trackId: string) => void,
- *   next: () => void,
- *   playSelectedTrack: (trackId: string) => Promise<void>,
- *   previous: () => void,
- *   queueTrack: (trackId: string) => void,
- *   removeQueuedTrack: (trackId: string) => void,
+ *   addTracks: (tracks: Array<{ id: string, title: string, artist: string, audioUrl: string, durationSeconds: number, isImported?: boolean }>) => void,
+   *   bootstrap: () => void,
+   *   cycleRepeatMode: () => void,
+   *   getState: () => object,
+   *   moveQueuedTrackDown: (trackId: string) => void,
+   *   moveQueuedTrackUp: (trackId: string) => void,
+   *   next: () => void,
+   *   playSelectedTrack: (trackId: string) => Promise<void>,
+   *   previous: () => void,
+   *   queueTrack: (trackId: string) => void,
+ *   removeTrack: (trackId: string) => void,
+   *   removeQueuedTrack: (trackId: string) => void,
  *   setFilterMode: (value: string) => void,
  *   setFilterQuery: (value: string) => void,
  *   setSortMode: (value: string) => void,
@@ -343,6 +344,18 @@ export function createPlayerController({
       trackProgressSeconds,
       volume
     });
+  }
+
+  /**
+   * Removes one track from all in-memory player state collections.
+   * @param {string} trackId The track identifier to remove.
+   * @returns {void}
+   */
+  function removeTrackState(trackId) {
+    favoriteTrackIds.delete(trackId);
+    queuedTrackIds = queuedTrackIds.filter((currentTrackId) => currentTrackId !== trackId);
+    recentTrackIds = recentTrackIds.filter((currentTrackId) => currentTrackId !== trackId);
+    delete trackProgressSeconds[trackId];
   }
 
   /**
@@ -674,6 +687,64 @@ export function createPlayerController({
       }
 
       queuedTrackIds = [...queuedTrackIds, trackId];
+      notify();
+    },
+
+    /**
+     * Removes a track from the playlist and reconciles playback state.
+     * @param {string} trackId The track identifier to remove.
+     * @returns {void}
+     */
+    removeTrack(trackId) {
+      const trackIndex = playlistTracks.findIndex((track) => track.id === trackId);
+
+      if (trackIndex < 0) {
+        return;
+      }
+
+      const removedSelectedTrack = trackIndex === selectedIndex;
+      const selectedTrack = playlistTracks[selectedIndex] ?? null;
+      const shouldResumePlayback = removedSelectedTrack && isPlaying;
+
+      if (removedSelectedTrack) {
+        audioAdapter.pause();
+        isPlaying = false;
+      }
+
+      playlistTracks = playlistTracks.filter((track) => track.id !== trackId);
+      removeTrackState(trackId);
+
+      if (playlistTracks.length === 0) {
+        selectedIndex = 0;
+        message = messages.EMPTY_PLAYLIST;
+        persistPreferences();
+        notify();
+        return;
+      }
+
+      if (removedSelectedTrack) {
+        selectedIndex = Math.min(trackIndex, playlistTracks.length - 1);
+        loadCurrentTrack();
+
+        if (shouldResumePlayback) {
+          void audioAdapter.play().catch(() => {
+            isPlaying = false;
+            message = messages.LOAD_ERROR;
+            notify();
+          });
+        }
+
+        return;
+      }
+
+      if (selectedTrack) {
+        const nextSelectedIndex = playlistTracks.findIndex((track) => track.id === selectedTrack.id);
+        selectedIndex = nextSelectedIndex >= 0
+          ? nextSelectedIndex
+          : Math.min(selectedIndex, playlistTracks.length - 1);
+      }
+
+      persistPreferences();
       notify();
     },
 

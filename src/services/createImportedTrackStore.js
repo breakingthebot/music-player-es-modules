@@ -19,7 +19,8 @@ const STORE_NAME = "tracks";
  *   indexedDb?: IDBFactory | undefined
  * }} [dependencies] Optional browser dependency overrides.
  * @returns {{
- *   loadTracks: () => Promise<Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>>,
+ *   deleteTrack: (trackId: string) => Promise<void>,
+ *   loadTracks: () => Promise<Array<{ id: string, title: string, artist: string, audioUrl: string, durationSeconds: number, isImported: boolean }>>,
  *   saveTracks: (records: Array<{ blob: Blob, durationSeconds: number, fileName: string, id: string, mimeType: string, title: string }>) => Promise<void>
  * }}
  */
@@ -31,7 +32,7 @@ export function createImportedTrackStore({
    * Loads imported tracks from IndexedDB and recreates playable object URLs.
    * @returns {Promise<Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>>}
    */
-  async function loadTracks() {
+ async function loadTracks() {
     if (!indexedDb) {
       logger.warn("Imported track storage is unavailable because IndexedDB is not supported.");
       return [];
@@ -47,6 +48,7 @@ export function createImportedTrackStore({
           audioUrl: createObjectUrl(record.blob),
           durationSeconds: record.durationSeconds,
           id: record.id,
+          isImported: true,
           title: record.title
         });
       });
@@ -60,6 +62,30 @@ export function createImportedTrackStore({
   }
 
   return {
+    /**
+     * Deletes one imported track record from IndexedDB storage.
+     * @param {string} trackId The imported track identifier.
+     * @returns {Promise<void>}
+     */
+    async deleteTrack(trackId) {
+      if (!indexedDb || !trackId) {
+        return;
+      }
+
+      try {
+        const database = await openDatabase(indexedDb);
+
+        await runReadWriteTransaction(database, STORE_NAME, (store) => {
+          store.delete(trackId);
+        });
+      } catch (error) {
+        logger.warn("Failed to delete imported track from IndexedDB.", {
+          error: error instanceof Error ? error.message : "Unknown error",
+          trackId
+        });
+      }
+    },
+
     loadTracks,
 
     /**

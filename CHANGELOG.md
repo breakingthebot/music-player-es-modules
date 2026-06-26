@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.15.0] - 2026-06-26
+### Added
+- Imported-track removal controls directly in playlist rows for locally added audio.
+- IndexedDB deletion support for imported tracks so removed local files stay gone after reload.
+- Controller and browser coverage for imported-track cleanup and persistence removal behavior.
+
+### Changed
+- Extended the track model with explicit imported-track metadata instead of relying on naming conventions.
+- Updated README architecture notes for imported-track lifecycle management.
+
 ## [0.14.0] - 2026-06-26
 ### Added
 - IndexedDB-backed imported-track storage for local MP3 and WAV files.

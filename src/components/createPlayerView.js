@@ -23,7 +23,8 @@ import { formatTime } from "../utils/formatTime.js";
  *   onMoveQueuedTrackUp: (trackId: string) => void,
  *   onNext: () => void,
  *   onPrevious: () => void,
- *   onQueueTrack: (trackId: string) => void,
+  *   onQueueTrack: (trackId: string) => void,
+ *   onRemoveImportedTrack: (trackId: string) => Promise<string>,
  *   onRemoveQueuedTrack: (trackId: string) => void,
  *   onSetSortMode: (value: string) => void,
  *   onSetVolume: (level: number) => void,
@@ -279,6 +280,15 @@ export function createPlayerView(callbacks) {
         },
         onQueueTrack: (trackId) => {
           callbacks.onQueueTrack(trackId);
+        },
+        onRemoveImportedTrack: (trackId) => {
+          void callbacks.onRemoveImportedTrack(trackId).then((statusMessage) => {
+            importStatus.textContent = statusMessage;
+          }).catch((error) => {
+            importStatus.textContent = error instanceof Error
+              ? error.message
+              : "Imported audio file could not be removed.";
+          });
         },
         onTrackSelect: (trackId) => {
           void callbacks.onTrackSelect(trackId);

@@ -454,7 +454,8 @@ input {
 }
 
 .queue-button,
-.favorite-button {
+.favorite-button,
+.remove-button {
   min-width: 88px;
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -477,7 +478,9 @@ input {
 .queue-button:hover,
 .queue-button:focus-visible,
 .favorite-button:hover,
-.favorite-button:focus-visible {
+.favorite-button:focus-visible,
+.remove-button:hover,
+.remove-button:focus-visible {
   transform: translateY(-1px);
   border-color: rgba(193, 92, 45, 0.5);
   outline: none;
@@ -486,6 +489,10 @@ input {
 .queue-button-active,
 .favorite-button-active {
   background: #f7dfca;
+}
+
+.remove-button {
+  color: #8a2e22;
 }
 
 .queue-details {

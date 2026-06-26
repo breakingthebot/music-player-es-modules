@@ -439,6 +439,7 @@ test("controller appends imported tracks into the active playlist", () => {
       audioUrl: "blob:local-track",
       durationSeconds: 210,
       id: "local-demo",
+      isImported: true,
       title: "Local Demo"
     }
   ]);
@@ -449,8 +450,45 @@ test("controller appends imported tracks into the active playlist", () => {
     audioUrl: "blob:local-track",
     durationSeconds: 210,
     id: "local-demo",
+    isImported: true,
     title: "Local Demo"
   });
+});
+
+test("controller removes imported tracks and cleans dependent state", async () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const savedPreferences = [];
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onPreferencesChange: (preferences) => savedPreferences.push(preferences),
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.addTracks([
+    {
+      artist: "Local file",
+      audioUrl: "blob:local-track",
+      durationSeconds: 210,
+      id: "local-demo",
+      isImported: true,
+      title: "Local Demo"
+    }
+  ]);
+  await controller.playSelectedTrack("local-demo");
+  controller.toggleFavoriteTrack("local-demo");
+  controller.queueTrack("two");
+  controller.queueTrack("local-demo");
+  controller.removeTrack("local-demo");
+
+  assert.deepEqual(states.at(-1).tracks.map((track) => track.id), ["one", "two", "three"]);
+  assert.equal(states.at(-1).selectedTrack.id, "three");
+  assert.deepEqual(states.at(-1).favoriteTrackIds, []);
+  assert.deepEqual(states.at(-1).queuedTracks.map((track) => track.id), ["two"]);
+  assert.equal(savedPreferences.at(-1).selectedTrackId, "three");
 });
 
 test("controller uses shuffle mode when advancing manually", () => {

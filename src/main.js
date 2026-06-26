@@ -79,6 +79,23 @@ async function bootstrapApplication() {
     onNext: () => controller.next(),
     onPrevious: () => controller.previous(),
     onQueueTrack: (trackId) => controller.queueTrack(trackId),
+    onRemoveImportedTrack: async (trackId) => {
+      const importedTrack = controller.getState().tracks.find((track) => track.id === trackId);
+
+      if (!importedTrack?.isImported) {
+        return "Only imported local tracks can be removed.";
+      }
+
+      await importedTrackStore.deleteTrack(trackId);
+      controller.removeTrack(trackId);
+
+      if (importedTrackUrls.has(importedTrack.audioUrl)) {
+        URL.revokeObjectURL(importedTrack.audioUrl);
+        importedTrackUrls.delete(importedTrack.audioUrl);
+      }
+
+      return `Removed imported track "${importedTrack.title}".`;
+    },
     onRemoveQueuedTrack: (trackId) => controller.removeQueuedTrack(trackId),
     onSetSortMode: (value) => controller.setSortMode(value),
     onSetVolume: (level) => controller.setVolume(level),

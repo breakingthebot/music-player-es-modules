@@ -36,9 +36,41 @@ test("imported track store saves and restores imported tracks", async () => {
       audioUrl: "blob:restored-track",
       durationSeconds: 182,
       id: "local-demo-1",
+      isImported: true,
       title: "Local Demo"
     }
   ]);
+});
+
+test("imported track store deletes one persisted imported track", async () => {
+  const indexedDb = createFakeIndexedDb();
+  const store = createImportedTrackStore({
+    createObjectUrl: () => "blob:restored-track",
+    indexedDb
+  });
+
+  await store.saveTracks([
+    {
+      blob: new Blob(["one"], { type: "audio/mpeg" }),
+      durationSeconds: 182,
+      fileName: "One.mp3",
+      id: "local-one",
+      mimeType: "audio/mpeg",
+      title: "One"
+    },
+    {
+      blob: new Blob(["two"], { type: "audio/mpeg" }),
+      durationSeconds: 188,
+      fileName: "Two.mp3",
+      id: "local-two",
+      mimeType: "audio/mpeg",
+      title: "Two"
+    }
+  ]);
+
+  await store.deleteTrack("local-one");
+
+  assert.deepEqual((await store.loadTracks()).map((track) => track.id), ["local-two"]);
 });
 
 test("imported track store returns an empty list when IndexedDB is unavailable", async () => {
@@ -154,6 +186,11 @@ function createObjectStore(recordStore, onWrite = () => {}) {
     },
     put(value) {
       recordStore.set(value.id, structuredClone(value));
+      onWrite();
+      return createRequest();
+    },
+    delete(key) {
+      recordStore.delete(key);
       onWrite();
       return createRequest();
     }

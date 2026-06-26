@@ -33,6 +33,7 @@ test("importAudioFiles creates playable tracks from supported files", async () =
       audioUrl: "blob:track-one",
       durationSeconds: 181,
       id: "local-my-song-mp3-2048-100-12345-0",
+      isImported: true,
       title: "My Song"
     }
   ]);

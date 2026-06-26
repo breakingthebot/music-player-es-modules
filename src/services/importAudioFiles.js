@@ -28,7 +28,7 @@ const SUPPORTED_EXTENSIONS = [".mp3", ".wav"];
  * @returns {Promise<{
  *   skippedFiles: string[],
  *   storedTracks: Array<{ blob: File, durationSeconds: number, fileName: string, id: string, mimeType: string, title: string }>,
- *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number, audioUrl: string }>
+ *   tracks: Array<{ id: string, title: string, artist: string, audioUrl: string, durationSeconds: number, isImported: boolean }>
  * }>}
  */
 export async function importAudioFiles({
@@ -56,6 +56,7 @@ export async function importAudioFiles({
         audioUrl,
         durationSeconds: Math.max(Math.round(durationSeconds), 1),
         id: buildImportedTrackId(file, index, now()),
+        isImported: true,
         title: getTrackTitleFromFileName(file.name)
       });
 
