@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.0] - 2026-06-25
+### Added
+- Explicit up-next queue controls so playlist rows can schedule tracks to play next.
+- Dedicated queue panel with removable queued items and visible playback order.
+- Controller and browser tests covering queue insertion, removal, and queue-first playback.
+
+### Changed
+- Updated the playlist row layout to support both favorite and queue actions without collapsing playback selection.
+- Updated README architecture notes for the new queue-driven playback flow.
+
 ## [0.8.0] - 2026-06-25
 ### Added
 - Playlist sorting options for default order, title, artist, and duration.

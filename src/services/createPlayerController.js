@@ -12,10 +12,10 @@ import {
   RECENT_TRACK_LIMIT,
   SORT_MODES
 } from "../config/appConfig.js";
-import { filterTracks } from "./filterTracks.js";
-import { sortTracks } from "./sortTracks.js";
 import { clampNumber } from "../utils/clampNumber.js";
 import { updateRecentTrackIds } from "../utils/updateRecentTrackIds.js";
+import { filterTracks } from "./filterTracks.js";
+import { sortTracks } from "./sortTracks.js";
 
 /**
  * Creates the player controller that mediates between audio and UI.
@@ -60,6 +60,8 @@ import { updateRecentTrackIds } from "../utils/updateRecentTrackIds.js";
  *   next: () => void,
  *   playSelectedTrack: (trackId: string) => Promise<void>,
  *   previous: () => void,
+ *   queueTrack: (trackId: string) => void,
+ *   removeQueuedTrack: (trackId: string) => void,
  *   setFilterMode: (value: string) => void,
  *   setFilterQuery: (value: string) => void,
  *   setSortMode: (value: string) => void,
@@ -90,6 +92,7 @@ export function createPlayerController({
     Array.isArray(initialPreferences.favoriteTrackIds) ? initialPreferences.favoriteTrackIds : []
   );
   let message = tracks.length === 0 ? messages.EMPTY_PLAYLIST : messages.LOADING;
+  let queuedTrackIds = [];
   let recentTrackIds = Array.isArray(initialPreferences.recentTrackIds)
     ? initialPreferences.recentTrackIds.filter((trackId) => tracks.some((track) => track.id === trackId))
     : [];
@@ -126,9 +129,11 @@ export function createPlayerController({
     const allowedTrackIds = new Set(availableTracks.map((track) => track.id));
 
     return Object.fromEntries(
-      Object.entries(storedProgress).filter(([trackId, seconds]) => {
-        return allowedTrackIds.has(trackId) && Number.isFinite(Number(seconds)) && Number(seconds) >= 0;
-      }).map(([trackId, seconds]) => [trackId, Math.floor(Number(seconds))])
+      Object.entries(storedProgress)
+        .filter(([trackId, seconds]) => {
+          return allowedTrackIds.has(trackId) && Number.isFinite(Number(seconds)) && Number(seconds) >= 0;
+        })
+        .map(([trackId, seconds]) => [trackId, Math.floor(Number(seconds))])
     );
   }
 
@@ -163,6 +168,16 @@ export function createPlayerController({
           resumeSeconds: trackProgressSeconds[trackId] ?? 0
         };
       })
+      .filter(Boolean);
+  }
+
+  /**
+   * Converts queued IDs into display-ready track records.
+   * @returns {Array<{ artist: string, id: string, title: string }>}
+   */
+  function getQueuedTracks() {
+    return queuedTrackIds
+      .map((trackId) => tracks.find((track) => track.id === trackId) ?? null)
       .filter(Boolean);
   }
 
@@ -245,6 +260,7 @@ export function createPlayerController({
       sortMode
     );
     const favoriteTracks = tracks.filter((track) => favoriteTrackIds.has(track.id));
+    const queuedTracks = getQueuedTracks();
     const recentTracks = getRecentTracks();
 
     return {
@@ -259,6 +275,7 @@ export function createPlayerController({
       isMuted,
       message,
       playlistMessage: getPlaylistMessage(filteredTracks.length),
+      queuedTracks,
       recentTracks,
       selectedTrack,
       sortMode,
@@ -311,6 +328,22 @@ export function createPlayerController({
   }
 
   /**
+   * Selects the next queued track when available.
+   * @returns {number | null} The next queued playlist index when present.
+   */
+  function consumeQueuedIndex() {
+    const nextQueuedTrackId = queuedTrackIds.shift();
+
+    if (!nextQueuedTrackId) {
+      return null;
+    }
+
+    const nextIndex = tracks.findIndex((track) => track.id === nextQueuedTrackId);
+
+    return nextIndex >= 0 ? nextIndex : null;
+  }
+
+  /**
    * Switches playback to a specific track index.
    * @param {number} nextIndex The next index to select.
    * @returns {Promise<void>}
@@ -349,7 +382,8 @@ export function createPlayerController({
     }
 
     if (tracks.length > 0) {
-      void playIndex(getWrappedIndex(1));
+      const queuedIndex = consumeQueuedIndex();
+      void playIndex(queuedIndex ?? getWrappedIndex(1));
     }
   });
 
@@ -419,7 +453,8 @@ export function createPlayerController({
      */
     next() {
       if (tracks.length > 0) {
-        void playIndex(getWrappedIndex(1));
+        const queuedIndex = consumeQueuedIndex();
+        void playIndex(queuedIndex ?? getWrappedIndex(1));
       }
     },
 
@@ -444,6 +479,33 @@ export function createPlayerController({
       if (tracks.length > 0) {
         void playIndex(getWrappedIndex(-1));
       }
+    },
+
+    /**
+     * Adds a track to the explicit up-next queue.
+     * @param {string} trackId The track to enqueue.
+     * @returns {void}
+     */
+    queueTrack(trackId) {
+      const trackExists = tracks.some((track) => track.id === trackId);
+      const selectedTrackId = tracks[selectedIndex]?.id ?? null;
+
+      if (!trackExists || queuedTrackIds.includes(trackId) || trackId === selectedTrackId) {
+        return;
+      }
+
+      queuedTrackIds = [...queuedTrackIds, trackId];
+      notify();
+    },
+
+    /**
+     * Removes a track from the explicit up-next queue.
+     * @param {string} trackId The track to remove.
+     * @returns {void}
+     */
+    removeQueuedTrack(trackId) {
+      queuedTrackIds = queuedTrackIds.filter((currentTrackId) => currentTrackId !== trackId);
+      notify();
     },
 
     /**

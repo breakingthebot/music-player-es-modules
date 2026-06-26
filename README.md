@@ -28,9 +28,9 @@ See `.env.example` for the canonical placeholder.
 Not deployed in this iteration.
 
 ## Architecture Notes
-This iteration improves how users move through the library rather than adding another playback feature. The controller now owns a persisted playlist sort mode in addition to filtering, favorites, recents, and resume state, while a dedicated sorting service keeps presentation ordering separate from the underlying playlist data. That means sorting is predictable, testable, and easy to extend without introducing state drift between the UI and the player logic.
+This iteration adds an explicit up-next queue without turning the player into a monolith. The controller now owns a lightweight queue state alongside the existing selected track, favorites, recents, search filters, sort mode, and resume data, while playback order stays predictable: queued tracks are consumed first, then the normal playlist order resumes. That keeps queue behavior easy to reason about and test because it is isolated from playlist rendering and from persistent preferences.
 
-Keyboard navigation is also more deliberate now. Playlist rows and recent-track buttons support directional and boundary navigation, so users can move through results with Arrow keys, Home, and End instead of tabbing through every control. Combined with the existing browser test coverage, that gives the app a more deliberate accessibility baseline and a better interaction model for larger playlists.
+On the UI side, the playlist now exposes a dedicated `Play next` action per row and a separate queue panel shows what will play next and lets users remove items before they are consumed. Splitting that queue panel into its own renderer keeps the view layer modular and makes the new feature feel visible instead of hidden behind controller state.
 
 ## Notes
 - Sample audio streams are loaded over HTTPS from SoundHelix for local demo playback.
@@ -42,3 +42,4 @@ Keyboard navigation is also more deliberate now. Playlist rows and recent-track 
 - Track playback position is persisted per track so recent items can resume from their saved timestamp.
 - GitHub Actions runs both unit tests and a Playwright browser interaction test on pushes and pull requests.
 - Playlist sort mode is persisted locally and keyboard navigation now supports Arrow, Home, and End movement across playlist and recent rows.
+- The up-next queue is intentionally session-only in this iteration so queue interactions stay simple while playback order rules are being established.

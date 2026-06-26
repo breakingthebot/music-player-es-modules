@@ -1,6 +1,6 @@
 /**
  * tests/services/createPlayerController.test.js
- * Verifies playlist transitions and playback state updates.
+ * Verifies playlist transitions, queue behavior, and playback state updates.
  * Connects to: src/services/createPlayerController.js
  * Created: 2026-06-25
  */
@@ -88,6 +88,13 @@ const tracks = [
     durationSeconds: 200,
     id: "two",
     title: "Track Two"
+  },
+  {
+    artist: "Artist Three",
+    audioUrl: "https://example.com/three.mp3",
+    durationSeconds: 160,
+    id: "three",
+    title: "Track Three"
   }
 ];
 
@@ -97,7 +104,9 @@ const messages = {
   LOAD_ERROR: "Track failed.",
   LOADING: "Loading tracks.",
   PAUSED: "Paused.",
-  PLAYING: "Playing."
+  PLAYING: "Playing.",
+  READY: "Ready.",
+  SEARCH_EMPTY: "No matches."
 };
 
 test("controller bootstrap loads the first track", () => {
@@ -231,10 +240,7 @@ test("controller filters playlist results without changing the selected track", 
   const states = [];
   const controller = createPlayerController({
     audioAdapter,
-    messages: {
-      ...messages,
-      SEARCH_EMPTY: "No matches."
-    },
+    messages,
     onStateChange: (state) => states.push(state),
     tracks
   });
@@ -251,10 +257,7 @@ test("controller exposes empty playlist search messaging", () => {
   const states = [];
   const controller = createPlayerController({
     audioAdapter,
-    messages: {
-      ...messages,
-      SEARCH_EMPTY: "No matches."
-    },
+    messages,
     onStateChange: (state) => states.push(state),
     tracks
   });
@@ -338,9 +341,52 @@ test("controller sorts filtered tracks and persists the selected sort mode", () 
   assert.equal(states.at(-1).sortMode, "title-asc");
   assert.deepEqual(states.at(-1).filteredTracks.map((track) => track.title), [
     "Track One",
+    "Track Three",
     "Track Two"
   ]);
   assert.equal(savedPreferences.at(-1).sortMode, "title-asc");
+});
+
+test("controller queues tracks and consumes the queue before the normal playlist order", async () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.queueTrack("three");
+  controller.queueTrack("two");
+  controller.next();
+
+  assert.equal(states.at(-1).selectedTrack.id, "three");
+  assert.deepEqual(states.at(-1).queuedTracks.map((track) => track.id), ["two"]);
+
+  await controller.playSelectedTrack("three");
+  controller.next();
+
+  assert.equal(states.at(-1).selectedTrack.id, "two");
+  assert.deepEqual(states.at(-1).queuedTracks.map((track) => track.id), []);
+});
+
+test("controller removes queued tracks from the up-next panel", () => {
+  const audioAdapter = createFakeAudioAdapter();
+  const states = [];
+  const controller = createPlayerController({
+    audioAdapter,
+    messages,
+    onStateChange: (state) => states.push(state),
+    tracks
+  });
+
+  controller.bootstrap();
+  controller.queueTrack("three");
+  controller.removeQueuedTrack("three");
+
+  assert.deepEqual(states.at(-1).queuedTracks, []);
 });
 
 test("controller records recently played tracks in most-recent order", async () => {

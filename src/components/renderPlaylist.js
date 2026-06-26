@@ -1,6 +1,6 @@
 /**
  * src/components/renderPlaylist.js
- * Renders the track list with accessible button controls.
+ * Renders the track list with accessible playback and action controls.
  * Connects to: src/components/createPlayerView.js
  * Created: 2026-06-25
  */
@@ -10,10 +10,12 @@
  * @param {{
  *   container: HTMLUListElement,
  *   favoriteTrackIds: string[],
- *   selectedTrackId: string | undefined,
- *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>,
  *   onFavoriteToggle: (trackId: string) => void,
- *   onTrackSelect: (trackId: string) => void
+ *   onQueueTrack: (trackId: string) => void,
+ *   onTrackSelect: (trackId: string) => void,
+ *   queuedTrackIds: string[],
+ *   selectedTrackId: string | undefined,
+ *   tracks: Array<{ id: string, title: string, artist: string, durationSeconds: number }>
  * }} dependencies Playlist rendering dependencies.
  * @returns {void}
  */
@@ -21,12 +23,15 @@ export function renderPlaylist({
   container,
   favoriteTrackIds,
   onFavoriteToggle,
+  onQueueTrack,
   onTrackSelect,
+  queuedTrackIds,
   selectedTrackId,
   tracks
 }) {
   container.replaceChildren();
   const favoriteIdSet = new Set(favoriteTrackIds);
+  const queuedIdSet = new Set(queuedTrackIds);
 
   for (const track of tracks) {
     const item = document.createElement("li");
@@ -50,7 +55,22 @@ export function renderPlaylist({
 
     const meta = document.createElement("span");
     meta.className = "playlist-track-meta";
-    meta.textContent = `${track.artist} • ${Math.round(track.durationSeconds / 60)} min`;
+    meta.textContent = `${track.artist} - ${Math.round(track.durationSeconds / 60)} min`;
+
+    const queueButton = document.createElement("button");
+    queueButton.type = "button";
+    queueButton.className = `queue-button${queuedIdSet.has(track.id) ? " queue-button-active" : ""}`;
+    queueButton.disabled = queuedIdSet.has(track.id);
+    queueButton.setAttribute(
+      "aria-label",
+      queuedIdSet.has(track.id)
+        ? `${track.title} is already queued`
+        : `Play ${track.title} next`
+    );
+    queueButton.textContent = queuedIdSet.has(track.id) ? "Queued" : "Play next";
+    queueButton.addEventListener("click", () => {
+      onQueueTrack(track.id);
+    });
 
     const favoriteButton = document.createElement("button");
     favoriteButton.type = "button";
@@ -62,13 +82,17 @@ export function renderPlaylist({
         ? `Remove ${track.title} from favorites`
         : `Add ${track.title} to favorites`
     );
-    favoriteButton.textContent = favoriteIdSet.has(track.id) ? "★" : "☆";
+    favoriteButton.textContent = favoriteIdSet.has(track.id) ? "Favorite" : "Fav";
     favoriteButton.addEventListener("click", () => {
       onFavoriteToggle(track.id);
     });
 
+    const actions = document.createElement("div");
+    actions.className = "playlist-actions";
+    actions.append(queueButton, favoriteButton);
+
     button.append(title, meta);
-    row.append(button, favoriteButton);
+    row.append(button, actions);
     item.append(row);
     container.append(item);
   }

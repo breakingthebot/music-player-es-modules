@@ -1,12 +1,13 @@
 /**
  * src/components/createPlayerView.js
  * Owns DOM references and translates controller state into UI updates.
- * Connects to: src/components/renderPlaylist.js, src/components/renderRecentTracks.js, src/utils/attachListKeyboardNavigation.js, src/utils/formatTime.js
+ * Connects to: src/components/renderPlaylist.js, src/components/renderQueue.js, src/components/renderRecentTracks.js, src/utils/attachListKeyboardNavigation.js, src/utils/formatTime.js
  * Created: 2026-06-25
  */
 
 import { SEEK_RANGE_MAX, SORT_MODES, VOLUME_RANGE_MAX } from "../config/appConfig.js";
 import { renderPlaylist } from "./renderPlaylist.js";
+import { renderQueue } from "./renderQueue.js";
 import { renderRecentTracks } from "./renderRecentTracks.js";
 import { attachListKeyboardNavigation } from "../utils/attachListKeyboardNavigation.js";
 import { formatTime } from "../utils/formatTime.js";
@@ -18,6 +19,8 @@ import { formatTime } from "../utils/formatTime.js";
  *   onFilterModeChange: (value: string) => void,
  *   onNext: () => void,
  *   onPrevious: () => void,
+ *   onQueueTrack: (trackId: string) => void,
+ *   onRemoveQueuedTrack: (trackId: string) => void,
  *   onSetSortMode: (value: string) => void,
  *   onSetVolume: (level: number) => void,
  *   onSeek: (ratio: number) => void,
@@ -37,6 +40,9 @@ export function createPlayerView(callbacks) {
   const recentTracksList = document.querySelector("#recent-tracks");
   const recentTracksSection = document.querySelector("#recent-tracks-section");
   const recentTracksSummary = document.querySelector("#recent-tracks-summary");
+  const queueList = document.querySelector("#queue-list");
+  const queueSection = document.querySelector("#queue-section");
+  const queueSummary = document.querySelector("#queue-summary");
   const seekSlider = document.querySelector("#seek-slider");
   const volumeSlider = document.querySelector("#volume-slider");
   const playButton = document.querySelector("#play-button");
@@ -102,6 +108,7 @@ export function createPlayerView(callbacks) {
 
   attachListKeyboardNavigation(playlist, ".playlist-button");
   attachListKeyboardNavigation(recentTracksList, ".recent-track-button");
+  attachListKeyboardNavigation(queueList, ".queue-remove-button");
 
   return {
     /**
@@ -118,6 +125,7 @@ export function createPlayerView(callbacks) {
      *   isMuted: boolean,
      *   message: string,
      *   playlistMessage: string,
+     *   queuedTracks: Array<{ id: string, title: string, artist: string }>,
      *   recentTracks: Array<{ id: string, title: string, artist: string, resumeSeconds: number }>,
      *   selectedTrack: { id: string, title: string, artist: string } | null,
      *   sortMode: string,
@@ -138,6 +146,7 @@ export function createPlayerView(callbacks) {
         isPlaying,
         message,
         playlistMessage,
+        queuedTracks,
         recentTracks,
         selectedTrack,
         sortMode,
@@ -183,6 +192,10 @@ export function createPlayerView(callbacks) {
       recentTracksSummary.textContent = recentTracks.length > 0
         ? `Resume one of your last ${recentTracks.length} tracks.`
         : "";
+      queueSection.hidden = queuedTracks.length === 0;
+      queueSummary.textContent = queuedTracks.length > 0
+        ? `${queuedTracks.length} queued ${queuedTracks.length === 1 ? "track" : "tracks"} will play before the normal order resumes.`
+        : "";
 
       renderRecentTracks({
         container: recentTracksList,
@@ -192,15 +205,27 @@ export function createPlayerView(callbacks) {
         recentTracks
       });
 
+      renderQueue({
+        container: queueList,
+        onRemoveQueuedTrack: (trackId) => {
+          callbacks.onRemoveQueuedTrack(trackId);
+        },
+        queuedTracks
+      });
+
       renderPlaylist({
         container: playlist,
         favoriteTrackIds,
         onFavoriteToggle: (trackId) => {
           callbacks.onToggleFavoriteTrack(trackId);
         },
+        onQueueTrack: (trackId) => {
+          callbacks.onQueueTrack(trackId);
+        },
         onTrackSelect: (trackId) => {
           void callbacks.onTrackSelect(trackId);
         },
+        queuedTrackIds: queuedTracks.map((track) => track.id),
         selectedTrackId: selectedTrack?.id,
         tracks: filteredTracks
       });

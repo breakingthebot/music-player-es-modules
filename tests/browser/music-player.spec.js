@@ -1,6 +1,6 @@
 /**
  * tests/browser/music-player.spec.js
- * Verifies core browser interactions for playback controls, search, favorites, and recents.
+ * Verifies core browser interactions for playback controls, queueing, search, favorites, and recents.
  * Connects to: playwright.config.js, index.html, src/main.js
  * Created: 2026-06-25
  */
@@ -65,19 +65,30 @@ async function installFakeAudio(page) {
   });
 }
 
-test("music player supports playback controls, search, favorites, and recents", async ({ page }) => {
+test("music player supports playback controls, queueing, search, favorites, and recents", async ({ page }) => {
   await installFakeAudio(page);
   await page.goto("/");
 
   await expect(page.getByRole("heading", { level: 1, name: "Modular Music Player" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Play" }).click();
-  await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
+  await page.locator("#play-button").click();
+  await expect(page.locator("#play-button")).toHaveText("Pause");
 
   await page.getByLabel("Seek within the current track").fill("50");
   await expect(page.locator("#current-time")).toHaveText("1:30");
 
   const playlistButtons = page.locator(".playlist-button");
+
+  await page.getByRole("button", { name: "Play Night Fall next" }).click();
+  await expect(page.locator("#queue-section")).toBeVisible();
+  await expect(page.locator("#queue-list")).toContainText("Night Fall");
+  await page.getByRole("button", { name: "Remove Night Fall from queue" }).click();
+  await expect(page.locator("#queue-section")).toBeHidden();
+
+  await page.getByRole("button", { name: "Play Night Fall next" }).click();
+  await page.locator("#next-button").click();
+  await expect(page.locator("#track-title")).toHaveText("Night Fall");
+  await expect(page.locator("#queue-section")).toBeHidden();
 
   await page.getByLabel("Sort playlist tracks").selectOption("title-asc");
   await expect(playlistButtons.first()).toContainText("City Lights");
